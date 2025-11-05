@@ -12,3 +12,4 @@ __pycache__/
 .venv/
 output/
 pngs/
+heics/
