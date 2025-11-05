@@ -1,0 +1,101 @@
+## Overview
+Take your time thinking and ask questions for clarification.
+Write a Python program that ingests images, conducts optical character recognition (OCR), and stores the results and associated files in the local folder system.
+
+
+## Requirements
+
+### Image Ingestion
+- **Image Source**: a local directory that i will define at runtime
+- **Supported Formats**: PNG 
+- **Expected Volume**: low volume, 1 image at a time
+- **Preprocessing**: 
+    - need to apply greyscale to every image before other transformations
+    - here is a list of the valid preprocessing methods with their associated parameters if they have any. example parameters are entered.
+        [
+        {"method": "grayscale", "parameters": None},
+        {"method": "gaussian_blur", "parameters": {"kernel": (5, 5), "sigmaX": 0, "sigmaY": 0}},
+        {"method": "edge_detection", "parameters": {"hysteresis_min": 100, "hysteresis_max": 200}},
+        {"method": "dilate", "parameters": {"kernel": (3, 3), "iterations": 1}},
+        {"method": "erode", "parameters": {"kernel": (3, 3), "iterations": 1}},
+        {"method": "threshold", "parameters": {"threshold": 200, "max_value": 255}},
+        {"method": "adaptive_threshold", "parameters": {"max_value": 255, "block_size": 15, "C": -2}},
+        {"method": "inversion", "parameters": None},
+        {"method": "morphology", "parameters": {"operation": "open", "kernel": (2, 2)}},
+        {"method": "blur", "parameters": {"kernel": (5, 5)}},
+        {"method": "contrast", "parameters": {"alpha": 1.0, "beta": 0}},
+        {"method": "median_blur", "parameters": {"ksize": 5}},
+        {"method": "bilateral_filter", "parameters": {"d": 9, "sigmaColor": 75, "sigmaSpace": 75}}
+        ]
+    - preprocessing steps and their order, along with parameters, are defined at run time
+
+### Text Recognition (OCR)
+- **OCR Library/Service**:
+    - paddleocr (paddlepaddle)
+        - ideal ocr library to use
+    - tesseract
+        - secondary ocr library to use
+    - easyocr
+        - tertiary
+    - i will want to be able to swap out different ocr models
+- **Language(s)**: english
+- **Image Characteristics**: a picture of a tv screen of the post-race scoreboard from Mario Kart Nintendo Switch. the screen is surrounded by a thick black border. on the screen is a 3 column table of with 12 rows. the table is located on the right-side of the screen. the table is not always at the exact same location in the picture, and may be slightly rotated or distorted.
+- **Table Details**: 3 columns by 12 rows. Column 1 is the players place in the race. Column 2 is the player's name. Column 3 is the player's score. Column 1's values can only be numbers between 1 and 12 inclusively. Column 2's values must match one element in a list of constant strings supplied through a csv file. Column 3's values must be an integer. The table is wuite transparent with the gaming environment showing through the background. most rows will be a transparent light grey but some rows will be a more opaque color that is not grey, white or black. text on grey rows is white and text on non-grey rows is not white. use this information to improve the ocr result.
+- **Text Extraction Scope**: structured table
+- **Confidence/Accuracy Requirements**: very accurate. 
+- **Any Post-Processing**: correction of common OCR errors. You need to teach me some post-processing techniques, it is new to me. 
+
+### Storage
+- **What to Store**
+    - csv files for predictions data. columns include: 
+        - predicted text, confidence scores, row ID (of the scoreboard table), column ID (of the scoreboard table), text coordinates (in in original image), original filepath, preprocessed image filepath, process start timestamp, preprocessing methods and parameters
+    - json files for configurations, constraints
+        - constraints: see Table Details above
+        - preprocessing configurations:
+            - methods applied
+            - order of methods applied
+            - parameters used for each method
+        - OCR configurations:
+            - engine (easyocr, tesseract, paddleocr)
+            - engine parameters (eg. tesseract pem)
+                - i don't know much about these type of parameters
+    - pngs for fully preprocessed images
+        - save the fully preprocessed image as a png that the OCR will use
+    - jpgs (can be compressed) for annotated images
+        - a grid drawn on the annotating the search logic (eg. bounding boxes, rows and columns, etc) and the predicted text placed just above the original text in a high contrast color.
+- **Connection Details**: local save. allow input and output paths to be defined at runtime
+
+### Additional Considerations
+- **Error Handling**: 
+    - handle errors gracefully and err on the side of caution
+    - loading files: throw error
+    - saving files: throw error
+    - column alignment in csv files: throw error
+    - failed OCR:
+        - if the OCR couldn't find a result with a certain level of confidence that matches the Table Details from above, then it could try a different preprocessing technique, or try a different OCR model. can retry for a defined number of times. if it still can't find a match, then raise an exception and skip to the next prediction
+        - if there is any other type of failure, throw an error
+- **Logging/Monitoring**: 
+    - make logs configurable
+    - usually, log only major events such as starting program, writing a file, program complete, and any errors, exceptions, or warnings.
+    - enable a debug mode that is verbose and logs everything
+    - store in a local .logging folder
+- **Performance Requirements**: in production will be mostly processing of one image at a time, in testing there will be batch image processing. if a gpu is available for ocr, use it
+- **Dependencies/Libraries**:
+    - use Pandas for data manipulation, including reading and writing csvs
+    - use cv2 for image preprocessing
+    - allow choice of using paddleocr, tesseract, and easyocr
+    - paddleocr requires paddlepaddle to be installed and tesseract and easyocr require tesseract to be installed
+
+- **Configurations**:
+    - think about how to optimize the preprocessing method configurations, the OCR configurations, and any other configurations that could be changed to improve the model
+
+- **Learning**:
+    - the images will always be very similar and the teble i want to extract will always be the same format. think about how to use that to improve accuracy.
+
+## Deliverables
+- one main script that will run the whole program and consists of:
+    1. ingesting the original, preprocessing the image, and saving it. This is one module that can be run on its own
+    2. ingesting the preprocessing image, applying OCR, saving the text prediction results, and saving an annotated image of the results. this is one module that can be run on its own
+- each module will be stored in it's own file, then there will be one main.py file that runs the program. 
+- make it executable in CLI and in python in an example file. 
+- save predicted text date to csv, preprocessed image to png and annotated image to jpg
