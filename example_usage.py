@@ -5,7 +5,7 @@ Demonstrates programmatic usage (non-CLI).
 """
 
 from pathlib import Path
-from src.ocr_processor import OCRProcessor
+from src.orchestrator import OCRProcessor
 
 
 def example_single_image_processing():

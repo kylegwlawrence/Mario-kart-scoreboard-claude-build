@@ -3,11 +3,11 @@ Mario Kart Scoreboard OCR Pipeline
 """
 
 from src.config_manager import ConfigManager
-from src.preprocessing import PreprocessingPipeline
-from src.ocr_engine import OCREngine
-from src.table_detection import TableDetector
-from src.validation import CellValidator
-from src.ocr_processor import OCRProcessor
+from src.preprocessor import PreprocessingPipeline
+from src.ocr_engines import OCREngine
+from src.table_detector import TableDetector
+from src.constraint_validator import CellValidator
+from src.orchestrator import OCRProcessor
 from src.utils import (
     setup_logger,
     create_output_directories,

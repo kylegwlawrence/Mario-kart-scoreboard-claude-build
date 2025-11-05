@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from src.ocr_processor import OCRProcessor
+from src.orchestrator import OCRProcessor
 
 
 def main():

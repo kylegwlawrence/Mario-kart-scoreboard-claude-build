@@ -11,10 +11,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 
 from src.config_manager import ConfigManager
-from src.preprocessing import PreprocessingPipeline
-from src.ocr_engine import OCREngine
-from src.table_detection import TableDetector
-from src.validation import CellValidator
+from src.preprocessor import PreprocessingPipeline
+from src.ocr_engines import OCREngine
+from src.table_detector import TableDetector
+from src.constraint_validator import CellValidator
 from src.utils import (
     create_output_directories,
     save_csv,
