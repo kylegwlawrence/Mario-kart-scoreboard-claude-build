@@ -62,29 +62,6 @@ def setup_logger(
     return logger
 
 
-def create_output_directories(base_paths: Dict[str, str]) -> Dict[str, str]:
-    """
-    Create all output directories specified in the base_paths dict.
-
-    Args:
-        base_paths: Dictionary with keys like 'preprocessed', 'annotated', etc.
-
-    Returns:
-        Dictionary with created paths
-
-    Raises:
-        OSError: If directory creation fails
-    """
-    created_paths = {}
-    try:
-        for key, path in base_paths.items():
-            Path(path).mkdir(parents=True, exist_ok=True)
-            created_paths[key] = path
-        return created_paths
-    except OSError as e:
-        raise OSError(f"Failed to create output directories: {e}")
-
-
 def save_csv(
     filepath: str,
     data: List[Dict[str, Any]],

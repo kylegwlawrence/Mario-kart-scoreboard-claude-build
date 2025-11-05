@@ -16,7 +16,6 @@ class OCREngine:
     def __init__(
         self,
         primary_engine: str = 'paddleocr',
-        use_gpu: str = 'auto',
         logger: Optional[logging.Logger] = None
     ):
         """
@@ -24,7 +23,6 @@ class OCREngine:
 
         Args:
             primary_engine: Primary OCR engine to use
-            use_gpu: 'auto' to auto-detect, True to force GPU, False to force CPU
             logger: Logger instance
 
         Raises:
@@ -36,37 +34,12 @@ class OCREngine:
 
         self.primary_engine = primary_engine
         self.logger = logger
-        self.gpu_available = self._detect_gpu()
-
-        if use_gpu == 'auto':
-            self.use_gpu = self.gpu_available
-        else:
-            self.use_gpu = bool(use_gpu)
 
         if self.logger:
-            self.logger.info(f"Initializing {primary_engine} OCR engine (GPU: {self.use_gpu})")
+            self.logger.info(f"Initializing {primary_engine} OCR engine")
 
         # Initialize the engine
         self.engine = self._initialize_engine(primary_engine)
-
-    def _detect_gpu(self) -> bool:
-        """
-        Detect if GPU is available.
-
-        Returns:
-            True if GPU is available, False otherwise
-        """
-        try:
-            import torch
-            gpu_available = torch.cuda.is_available()
-            if self.logger:
-                self.logger.info(f"GPU available: {gpu_available}")
-            return gpu_available
-        except ImportError:
-            # If torch is not available, assume no GPU
-            if self.logger:
-                self.logger.debug("torch not available, assuming no GPU")
-            return False
 
     def _initialize_engine(self, engine_name: str) -> Any:
         """
@@ -95,7 +68,7 @@ class OCREngine:
 
             elif engine_name == 'easyocr':
                 import easyocr
-                return easyocr.Reader(['en'], gpu=self.use_gpu)
+                return easyocr.Reader(['en'])
 
         except ImportError as e:
             raise ImportError(f"Failed to import {engine_name}: {e}")

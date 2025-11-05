@@ -10,7 +10,6 @@ from src.constraint_validator import CellValidator
 from src.orchestrator import OCRProcessor
 from src.utils import (
     setup_logger,
-    create_output_directories,
     save_csv,
     load_csv,
     save_json,
@@ -26,7 +25,6 @@ __all__ = [
     'CellValidator',
     'OCRProcessor',
     'setup_logger',
-    'create_output_directories',
     'save_csv',
     'load_csv',
     'save_json',

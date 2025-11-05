@@ -139,8 +139,7 @@ Example custom config structure:
   "ocr_config": {
     "engines": ["paddleocr", "tesseract", "easyocr"],
     "primary_engine": "tesseract",
-    "confidence_threshold": 0.6,
-    "use_gpu": true
+    "confidence_threshold": 0.6
   },
   "table_detection": {
     "enabled": true,

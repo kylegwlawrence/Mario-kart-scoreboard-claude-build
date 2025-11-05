@@ -187,8 +187,7 @@ class ConfigManager:
             "ocr_config": {
                 "engines": ["paddleocr", "tesseract", "easyocr"],
                 "primary_engine": "paddleocr",
-                "confidence_threshold": 0.5,
-                "use_gpu": "auto"
+                "confidence_threshold": 0.5
             },
             "table_detection": {
                 "enabled": True,

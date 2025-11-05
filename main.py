@@ -66,7 +66,7 @@ Examples:
     if not Path(args.config).exists():
         parser.error(f'Config file not found: {args.config}')
 
-    # Initialize processor
+    # Initialize OCR processor
     try:
         processor = OCRProcessor(args.config, debug=args.debug)
     except Exception as e:
@@ -75,8 +75,10 @@ Examples:
 
     # Process images
     try:
+        # process one image
         if args.image:
             process_single_image(processor, args.image)
+        # process all images in a directory
         else:
             process_image_directory(processor, args.image_dir)
 
@@ -101,9 +103,10 @@ def process_single_image(processor: OCRProcessor, image_path: str) -> None:
     """
     if not Path(image_path).exists():
         raise FileNotFoundError(f"Image not found: {image_path}")
-
     processor.logger.info(f"\nProcessing single image: {image_path}")
-    results = processor.process_image(image_path)
+    
+    # process the image with the specified ocr processor and save to output
+    processor.process_image(image_path)
     processor.logger.info(f"\nResults saved to {processor.output_paths['predictions']}/")
 
 
@@ -133,9 +136,12 @@ def process_image_directory(processor: OCRProcessor, image_dir: str) -> None:
 
     processor.logger.info(f"Found {len(image_files)} images to process")
 
+    # loop over the pngs to apply the OCR engine
     for i, image_path in enumerate(image_files, 1):
         try:
             processor.logger.info(f"\n[{i}/{len(image_files)}] Processing: {image_path.name}")
+            
+            # process the image with the specified ocr processor and save to output
             results = processor.process_image(str(image_path))
             processor.logger.info(f"Success: {results['valid_predictions']}/{results['total_cells']} cells valid")
 

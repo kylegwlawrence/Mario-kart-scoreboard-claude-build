@@ -15,12 +15,7 @@ from src.preprocessor import PreprocessingPipeline
 from src.ocr_engines import OCREngine
 from src.table_detector import TableDetector
 from src.constraint_validator import CellValidator
-from src.utils import (
-    create_output_directories,
-    save_csv,
-    save_json,
-    load_valid_player_names,
-)
+from src.utils import save_csv, save_json,load_valid_player_names
 
 
 class OCRProcessor:
@@ -61,13 +56,12 @@ class OCRProcessor:
             self.logger.error(f"Failed to load configuration: {e}")
             raise
 
-        # Create output directories
+        # Load output directories (assumed to be already created)
         try:
-            output_paths = self.config_manager.get_output_paths()
-            self.output_paths = create_output_directories(output_paths)
-            self.logger.info(f"Created output directories: {self.output_paths}")
-        except OSError as e:
-            self.logger.error(f"Failed to create output directories: {e}")
+            self.output_paths = self.config_manager.get_output_paths()
+            self.logger.info(f"Output directories: {self.output_paths}")
+        except Exception as e:
+            self.logger.error(f"Failed to load output directories: {e}")
             raise
 
         # Load valid player names
@@ -82,9 +76,9 @@ class OCRProcessor:
         self.preprocessing = PreprocessingPipeline(self.logger)
 
         ocr_config = self.config_manager.get_ocr_config()
+        # get the primary OCR engine from the config files and init the OCR engine
         self.ocr_engine = OCREngine(
             primary_engine=ocr_config.get('primary_engine', 'paddleocr'),
-            use_gpu=ocr_config.get('use_gpu', 'auto'),
             logger=self.logger
         )
 

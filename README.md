@@ -12,7 +12,6 @@ A Python-based optical character recognition (OCR) pipeline designed to extract 
   - Fuzzy matching for player names
   - Range validation for scores (1-999)
 - **Retry Logic**: Per-cell retry with configurable strategies and preprocessing chains
-- **GPU Acceleration**: Automatic GPU detection and usage when available
 - **Comprehensive Logging**: Standard and debug logging modes
 - **Flexible Configuration**: JSON-based configuration files in `configs/` directory
 - **Annotated Output**: Original images with gridlines, predictions, and confidence scores
@@ -39,9 +38,6 @@ pip install -r requirements.txt
 pip install paddlepaddle paddleocr  # For paddleocr (recommended)
 pip install pytesseract tesseract    # For tesseract
 pip install easyocr                  # For easyocr
-
-# Optional: GPU support
-pip install torch torchvision  # For GPU acceleration
 ```
 
 3. **Verify installation**:
@@ -124,8 +120,7 @@ The default configuration is located in `configs/default_config.json`. Create ne
   "ocr_config": {
     "engines": ["paddleocr", "tesseract", "easyocr"],
     "primary_engine": "paddleocr",
-    "confidence_threshold": 0.5,
-    "use_gpu": "auto"
+    "confidence_threshold": 0.5
   },
   "table_detection": {
     "enabled": true,
@@ -268,7 +263,6 @@ Input Image
 
 ## Performance Considerations
 
-- **GPU Acceleration**: Automatically detected and used when available
 - **Batch Processing**: Process multiple images sequentially
 - **Preprocessing Optimization**: Choose efficient preprocessing chains
 - **OCR Selection**: paddleocr is fastest, easyocr is most accurate
@@ -291,16 +285,9 @@ pip install paddlepaddle paddleocr
 - Try different OCR engine
 - Experiment with preprocessing methods
 
-### GPU not detected
-Check CUDA installation:
-```bash
-python3 -c "import torch; print(torch.cuda.is_available())"
-```
-
 ### Out of memory
 - Process images in batches (default config does this)
 - Reduce image resolution in preprocessing
-- Switch to CPU: `"use_gpu": false`
 
 ## Development
 
