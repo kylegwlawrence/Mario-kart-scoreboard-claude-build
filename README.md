@@ -13,7 +13,7 @@ A Python-based optical character recognition (OCR) pipeline designed to extract 
   - Range validation for scores (1-999)
 - **Retry Logic**: Per-cell retry with configurable strategies and preprocessing chains
 - **Comprehensive Logging**: Standard and debug logging modes
-- **Flexible Configuration**: JSON-based configuration files in `configs/` directory
+- **Flexible Configuration**: JSON-based configuration files in `src/configs/` directory
 - **Annotated Output**: Original images with gridlines, predictions, and confidence scores
 
 ## Installation
@@ -61,7 +61,7 @@ python main.py --image-dir pngs/
 
 #### Use a custom configuration:
 ```bash
-python main.py --image pngs/IMG_7995.png --config configs/custom_config.json
+python main.py --image pngs/IMG_7995.png --config src/configs/custom_config.json
 ```
 
 #### Enable debug logging:
@@ -80,7 +80,7 @@ python main.py --help
 from src.ocr_processor import OCRProcessor
 
 # Initialize processor
-processor = OCRProcessor('configs/default_config.json', debug=False)
+processor = OCRProcessor('src/configs/default_config.json', debug=False)
 
 # Process a single image
 results = processor.process_image('pngs/IMG_7995.png')
@@ -95,7 +95,7 @@ See `example_usage.py` for more detailed examples.
 ## Configuration
 
 ### Default Configuration
-The default configuration is located in `configs/default_config.json`. Create new JSON files in the `configs/` directory to define custom configurations.
+The default configuration is located in `src/configs/default_config.json`. Create new JSON files in the `src/configs/` directory to define custom configurations.
 
 ### Configuration Structure
 

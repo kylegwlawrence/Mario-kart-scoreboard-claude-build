@@ -22,13 +22,13 @@ Examples:
   python main.py --image pngs/IMG_7995.png
 
   # Process a single image with custom config
-  python main.py --image pngs/IMG_7995.png --config configs/custom_config.json
+  python main.py --image pngs/IMG_7995.png --config src/configs/custom_config.json
 
   # Enable debug logging
   python main.py --image pngs/IMG_7995.png --debug
 
   # Process all images in a directory
-  python main.py --image-dir pngs/ --config configs/default_config.json
+  python main.py --image-dir pngs/ --config src/configs/default_config.json
         """
     )
 
@@ -45,8 +45,8 @@ Examples:
     parser.add_argument(
         '--config',
         type=str,
-        default='configs/default_config.json',
-        help='Path to configuration file (default: configs/default_config.json)'
+        default='src/configs/default_config.json',
+        help='Path to configuration file (default: src/configs/default_config.json)'
     )
     parser.add_argument(
         '--debug',

@@ -16,7 +16,7 @@ def example_single_image_processing():
 
     # Initialize the OCR processor with config
     processor = OCRProcessor(
-        config_path='configs/default_config.json',
+        config_path='src/configs/default_config.json',
         debug=False  # Set to True for verbose logging
     )
 
@@ -51,7 +51,7 @@ def example_batch_processing():
     print("=" * 80)
 
     processor = OCRProcessor(
-        config_path='configs/default_config.json',
+        config_path='src/configs/default_config.json',
         debug=False
     )
 
@@ -106,8 +106,8 @@ def example_with_custom_config():
     print("""
 To use a custom configuration:
 
-1. Create a new JSON file in the configs/ directory
-   e.g., configs/my_custom_config.json
+1. Create a new JSON file in the src/configs/ directory
+   e.g., src/configs/my_custom_config.json
 
 2. Customize settings like:
    - Different preprocessing chain
@@ -116,7 +116,7 @@ To use a custom configuration:
    - Different validation thresholds
 
 3. Initialize processor with custom config:
-   processor = OCRProcessor('configs/my_custom_config.json')
+   processor = OCRProcessor('src/configs/my_custom_config.json')
 
 Example custom config structure:
 {
