@@ -5,7 +5,7 @@ Handles paddleocr, tesseract, and easyocr.
 
 import logging
 import numpy as np
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 
 class OCREngine:

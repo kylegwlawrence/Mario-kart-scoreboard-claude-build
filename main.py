@@ -6,9 +6,7 @@ Supports both CLI and programmatic usage.
 
 import sys
 import argparse
-import logging
 from pathlib import Path
-from typing import Optional
 
 from src.orchestrator import OCRProcessor
 
