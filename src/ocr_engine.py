@@ -222,23 +222,3 @@ class OCREngine:
 
         except Exception as e:
             raise Exception(f"EasyOCR extraction failed: {e}")
-
-    def switch_engine(self, engine_name: str) -> None:
-        """
-        Switch to a different OCR engine.
-
-        Args:
-            engine_name: Name of the engine to switch to
-
-        Raises:
-            ValueError: If engine is not supported
-            ImportError: If engine library is not installed
-        """
-        if engine_name not in self.SUPPORTED_ENGINES:
-            raise ValueError(f"Unsupported engine: {engine_name}")
-
-        if self.logger:
-            self.logger.info(f"Switching from {self.primary_engine} to {engine_name}")
-
-        self.primary_engine = engine_name
-        self.engine = self._initialize_engine(engine_name)
