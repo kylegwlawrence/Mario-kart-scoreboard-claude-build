@@ -12,7 +12,7 @@ import easyocr
 
 
 class OCREngine:
-    """Unified OCR interface for multiple engines."""
+    """Unified OCR class to handle multiple different OCR libraries"""
 
     SUPPORTED_ENGINES = ['paddleocr', 'tesseract', 'easyocr']
 
@@ -22,7 +22,7 @@ class OCREngine:
         logger: Optional[logging.Logger] = None
     ):
         """
-        Initialize OCR engine.
+        Initializes the OCR engine specified as primary. 
 
         Args:
             primary_engine: Primary OCR engine to use
@@ -30,7 +30,6 @@ class OCREngine:
 
         Raises:
             ValueError: If engine is not supported
-            ImportError: If required library is not installed
         """
         if primary_engine not in self.SUPPORTED_ENGINES:
             raise ValueError(f"Unsupported engine: {primary_engine}. Must be one of {self.SUPPORTED_ENGINES}")

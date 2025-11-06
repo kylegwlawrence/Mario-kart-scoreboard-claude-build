@@ -30,7 +30,6 @@ def convert_heic_to_png(
     Raises:
         FileNotFoundError: If input file doesn't exist
         ValueError: If input file is not HEIC format
-        ImportError: If required library is not installed
         IOError: If conversion or saving fails
     """
     # Validate input file
