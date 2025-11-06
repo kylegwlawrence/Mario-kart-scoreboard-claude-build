@@ -16,6 +16,7 @@ from src.ocr_engines import OCREngine
 from src.table_detector import TableDetector
 from src.constraint_validator import CellValidator
 from src.utils import save_csv, save_json, load_valid_player_names
+from src import box_bounds
 
 
 class OCRProcessor:
@@ -174,23 +175,17 @@ class OCRProcessor:
             self.logger.error(f"Failed to save preprocessed image: {e}")
             raise
 
-        # Detect table bounds
+        # Extract cells using predefined grid bounds
         try:
-            table_bounds = self.table_detector.find_table_bounds(preprocessed_image)
-            self.logger.info(f"Table bounds detected: {table_bounds}")
-        except Exception as e:
-            self.logger.warning(f"Table detection failed: {e}")
-            # Use full image bounds
-            h, w = preprocessed_image.shape[:2]
-            table_bounds = (0, 0, w, h)
-
-        # Extract table cells
-        try:
-            cells = self.table_detector.extract_cells(preprocessed_image, table_bounds)
-            self.logger.info(f"Extracted {len(cells)} cells from table")
+            cells = self.extract_cells_from_grid(preprocessed_image, columns_to_process=[1, 2, 4])
+            self.logger.info(f"Extracted {len(cells)} cells from predefined grid")
         except Exception as e:
             self.logger.error(f"Cell extraction failed: {e}")
             raise
+
+        # Use full image bounds for annotations
+        h, w = preprocessed_image.shape[:2]
+        table_bounds = (0, 0, w, h)
 
         # Process start timestamp
         process_start_time = datetime.now().isoformat()
@@ -213,6 +208,7 @@ class OCRProcessor:
             raise
 
         # Prepare and save results
+        img_h, img_w = image.shape[:2]
         results = self._prepare_results(
             predictions,
             failed_cells,
@@ -220,7 +216,9 @@ class OCRProcessor:
             str(preprocessed_path),
             preprocessing_methods,
             process_start_time,
-            output_filename_prefix
+            output_filename_prefix,
+            img_w,
+            img_h
         )
 
         return results
@@ -249,6 +247,84 @@ class OCRProcessor:
 
         preprocessed, applied_methods = self.preprocessing.apply_chain(image, methods)
         return preprocessed, applied_methods
+
+    def extract_cells_from_grid(
+        self,
+        image: np.ndarray,
+        columns_to_process: Optional[List[int]] = None
+    ) -> Dict[Tuple[int, int], np.ndarray]:
+        """
+        Extract cells from image using predefined grid bounds.
+
+        Args:
+            image: Preprocessed image
+            columns_to_process: List of column indices to extract (default: [1, 2, 4])
+
+        Returns:
+            Dictionary with (row, col) keys and cell images as values
+        """
+        if columns_to_process is None:
+            columns_to_process = [1, 2, 4]
+
+        cells = {}
+        img_height, img_width = image.shape[:2]
+
+        for row in range(box_bounds.NUM_ROWS):
+            for col in columns_to_process:
+                try:
+                    # Get percentage bounds from box_bounds
+                    left_pct, top_pct, right_pct, bottom_pct = box_bounds.get_cell_bounds(row, col)
+
+                    # Convert percentage bounds to pixel coordinates
+                    x = int(left_pct * img_width)
+                    y = int(top_pct * img_height)
+                    width = int((right_pct - left_pct) * img_width)
+                    height = int((bottom_pct - top_pct) * img_height)
+
+                    # Extract cell image
+                    cell_image = image[y:y+height, x:x+width]
+
+                    if cell_image.size > 0:
+                        cells[(row, col)] = cell_image
+                    else:
+                        self.logger.warning(f"Cell ({row}, {col}): Empty region extracted")
+
+                except Exception as e:
+                    self.logger.error(f"Failed to extract cell ({row}, {col}): {e}")
+
+        return cells
+
+    def get_cell_coordinates_from_grid(
+        self,
+        row: int,
+        col: int,
+        img_width: int,
+        img_height: int
+    ) -> Tuple[int, int, int, int]:
+        """
+        Get pixel coordinates of a cell using grid bounds.
+
+        Args:
+            row: Row index (0-11)
+            col: Column index (0-4)
+            img_width: Image width in pixels
+            img_height: Image height in pixels
+
+        Returns:
+            Tuple of (x, y, width, height) in pixel coordinates
+        """
+        try:
+            left_pct, top_pct, right_pct, bottom_pct = box_bounds.get_cell_bounds(row, col)
+
+            x = int(left_pct * img_width)
+            y = int(top_pct * img_height)
+            width = int((right_pct - left_pct) * img_width)
+            height = int((bottom_pct - top_pct) * img_height)
+
+            return x, y, width, height
+        except Exception as e:
+            self.logger.error(f"Failed to get coordinates for cell ({row}, {col}): {e}")
+            return 0, 0, 0, 0
 
     def _process_cells_with_retry(
         self,
@@ -354,7 +430,9 @@ class OCRProcessor:
         preprocessed_path: str,
         preprocessing_methods: List[str],
         process_start_time: str,
-        filename_prefix: str
+        filename_prefix: str,
+        img_width: int,
+        img_height: int
     ) -> Dict[str, Any]:
         """
         Prepare and save results to CSV and JSON.
@@ -367,6 +445,8 @@ class OCRProcessor:
             preprocessing_methods: List of preprocessing methods applied
             process_start_time: Timestamp when processing started
             filename_prefix: Prefix for output files
+            img_width: Original image width
+            img_height: Original image height
 
         Returns:
             Dictionary with results metadata
@@ -374,7 +454,7 @@ class OCRProcessor:
         # Prepare CSV data
         csv_data = []
         for (row, col), (text, confidence) in sorted(predictions.items()):
-            cell_x, cell_y, cell_w, cell_h = self.table_detector.get_cell_coordinates(row, col, (0, 0, 1920, 1080))
+            cell_x, cell_y, cell_w, cell_h = self.get_cell_coordinates_from_grid(row, col, img_width, img_height)
 
             csv_data.append({
                 'row_id': row,

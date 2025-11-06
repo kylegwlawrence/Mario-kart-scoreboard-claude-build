@@ -133,7 +133,7 @@ class CellValidator:
         Validate a cell value based on its column.
 
         Args:
-            column: Column index (0=place, 1=name, 2=score)
+            column: Column index (1=place, 2=name, 4=score)
             value: Extracted text
             fuzzy_threshold: Fuzzy match threshold for names
 
@@ -143,11 +143,11 @@ class CellValidator:
         Raises:
             ValueError: If column index is invalid
         """
-        if column == 0:
+        if column == 1:
             return self.validate_place(value)
-        elif column == 1:
-            return self.validate_player_name(value, fuzzy_threshold)
         elif column == 2:
+            return self.validate_player_name(value, fuzzy_threshold)
+        elif column == 4:
             return self.validate_score(value)
         else:
             raise ValueError(f"Invalid column index: {column}")

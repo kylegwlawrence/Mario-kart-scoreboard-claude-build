@@ -137,21 +137,101 @@ The default configuration is located in `src/configs/default_config.json`. Creat
 
 ### Available Preprocessing Methods
 
-| Method | Parameters | Description |
-|--------|-----------|-------------|
-| `grayscale` | None | Convert to grayscale |
-| `gaussian_blur` | kernel, sigmaX, sigmaY | Apply Gaussian blur |
-| `edge_detection` | hysteresis_min, hysteresis_max | Canny edge detection |
-| `dilate` | kernel, iterations | Dilate morphology |
-| `erode` | kernel, iterations | Erode morphology |
-| `threshold` | threshold, max_value | Binary threshold |
-| `adaptive_threshold` | max_value, block_size, C | Adaptive threshold |
-| `inversion` | None | Invert colors |
-| `morphology` | operation, kernel | Morphological operations |
-| `blur` | kernel | Simple blur |
-| `contrast` | alpha, beta | Adjust contrast |
-| `median_blur` | ksize | Median blur |
-| `bilateral_filter` | d, sigmaColor, sigmaSpace | Bilateral filter |
+14 preprocessing methods are available for configurable image transformation pipelines:
+
+#### Quick Reference Table
+
+| Method | Required Params | Optional Params | Notes |
+|--------|---|---|---|
+| grayscale | - | - | No parameters |
+| gaussian_blur | - | kernel, sigmaX, sigmaY | - |
+| edge_detection | - | hysteresis_min, hysteresis_max | Canny algorithm |
+| dilate | - | kernel, iterations | - |
+| erode | - | kernel, iterations | - |
+| threshold | - | threshold, max_value | Binary thresholding |
+| adaptive_threshold | - | max_value, block_size, C | block_size auto-made odd |
+| inversion | - | - | No parameters |
+| morphology | - | operation, kernel | operation: open/close/gradient/tophat/blackhat |
+| blur | - | kernel | Simple blur |
+| contrast | - | alpha, beta | alpha: contrast, beta: brightness |
+| median_blur | - | ksize | ksize auto-made odd |
+| bilateral_filter | - | d, sigmaColor, sigmaSpace | Edge-preserving |
+| downscale | scale_factor OR (width AND height) | - | Use one method |
+
+#### Detailed Parameters Reference
+
+**1. grayscale**
+- No parameters needed
+- Example: `{"method": "grayscale"}`
+
+**2. gaussian_blur**
+- `kernel` (tuple): Kernel size, default: (5, 5)
+- `sigmaX` (float): Sigma X, default: 0
+- `sigmaY` (float): Sigma Y, default: 0
+- Example: `{"method": "gaussian_blur", "parameters": {"kernel": [5, 5], "sigmaX": 0, "sigmaY": 0}}`
+
+**3. edge_detection**
+- `hysteresis_min` (int): Lower threshold, default: 100
+- `hysteresis_max` (int): Upper threshold, default: 200
+- Example: `{"method": "edge_detection", "parameters": {"hysteresis_min": 100, "hysteresis_max": 200}}`
+
+**4. dilate**
+- `kernel` (tuple): Kernel size, default: (3, 3)
+- `iterations` (int): Number of iterations, default: 1
+- Example: `{"method": "dilate", "parameters": {"kernel": [3, 3], "iterations": 1}}`
+
+**5. erode**
+- `kernel` (tuple): Kernel size, default: (3, 3)
+- `iterations` (int): Number of iterations, default: 1
+- Example: `{"method": "erode", "parameters": {"kernel": [3, 3], "iterations": 1}}`
+
+**6. threshold**
+- `threshold` (int): Threshold value, default: 127
+- `max_value` (int): Maximum value for above-threshold pixels, default: 255
+- Example: `{"method": "threshold", "parameters": {"threshold": 127, "max_value": 255}}`
+
+**7. adaptive_threshold**
+- `max_value` (int): Maximum value, default: 255
+- `block_size` (int): Size of pixel neighborhood (auto-adjusted to odd), default: 11
+- `C` (float): Constant subtracted from mean, default: 2
+- Example: `{"method": "adaptive_threshold", "parameters": {"max_value": 255, "block_size": 11, "C": 2}}`
+
+**8. inversion**
+- No parameters needed
+- Example: `{"method": "inversion"}`
+
+**9. morphology**
+- `operation` (string): Type of operation - 'open', 'close', 'gradient', 'tophat', or 'blackhat', default: 'open'
+- `kernel` (tuple): Kernel size, default: (5, 5)
+- Example: `{"method": "morphology", "parameters": {"operation": "open", "kernel": [5, 5]}}`
+
+**10. blur**
+- `kernel` (tuple): Kernel size, default: (5, 5)
+- Example: `{"method": "blur", "parameters": {"kernel": [5, 5]}}`
+
+**11. contrast**
+- `alpha` (float): Contrast scaling factor, default: 1.0 (1.0 = no change)
+- `beta` (int): Brightness offset, default: 0
+- Example: `{"method": "contrast", "parameters": {"alpha": 1.5, "beta": 10}}`
+
+**12. median_blur**
+- `ksize` (int): Kernel size (auto-adjusted to odd if even), default: 5
+- Example: `{"method": "median_blur", "parameters": {"ksize": 5}}`
+
+**13. bilateral_filter**
+- `d` (int): Diameter of each pixel neighborhood, default: 9
+- `sigmaColor` (float): Filter sigma in color space, default: 75
+- `sigmaSpace` (float): Filter sigma in coordinate space, default: 75
+- Example: `{"method": "bilateral_filter", "parameters": {"d": 9, "sigmaColor": 75, "sigmaSpace": 75}}`
+
+**14. downscale**
+- **Option A - Scale factor (proportional):**
+  - `scale_factor` (float): Scale multiplier, e.g., 0.5 for 50%
+  - Example: `{"method": "downscale", "parameters": {"scale_factor": 0.5}}`
+- **Option B - Explicit dimensions:**
+  - `width` (int): Target width in pixels
+  - `height` (int): Target height in pixels
+  - Example: `{"method": "downscale", "parameters": {"width": 1920, "height": 1080}}`
 
 ## Output
 
