@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from PIL import Image
 
 
 class PreprocessingPipeline:
@@ -28,6 +29,7 @@ class PreprocessingPipeline:
         'contrast': 'apply_contrast',
         'median_blur': 'apply_median_blur',
         'bilateral_filter': 'apply_bilateral_filter',
+        'downscale': 'apply_downscale',
     }
 
     def __init__(self, logger: Optional[logging.Logger] = None):
@@ -235,3 +237,32 @@ class PreprocessingPipeline:
         sigmaColor = parameters.get('sigmaColor', 75)
         sigmaSpace = parameters.get('sigmaSpace', 75)
         return cv2.bilateralFilter(image, d, sigmaColor, sigmaSpace)
+
+    @staticmethod
+    def apply_downscale(image: np.ndarray, parameters: Dict[str, Any]) -> np.ndarray:
+        """Downscale image using PIL's high-quality LANCZOS resampling.
+
+        Supports either explicit dimensions or scale_factor for proportional scaling.
+        """
+        width = parameters.get('width')
+        height = parameters.get('height')
+        scale_factor = parameters.get('scale_factor')
+
+        # Determine target dimensions
+        original_height, original_width = image.shape[:2]
+
+        if scale_factor is not None:
+            # Scale both dimensions proportionally
+            width = int(original_width * scale_factor)
+            height = int(original_height * scale_factor)
+        elif width is None or height is None:
+            raise ValueError("Downscale requires either 'scale_factor' or both 'width' and 'height' parameters")
+
+        # Convert numpy array (BGR) to PIL Image (RGB)
+        pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+        # Resize using LANCZOS filter
+        resized_image = pil_image.resize((width, height), Image.LANCZOS)
+
+        # Convert back to numpy array (BGR)
+        return cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
