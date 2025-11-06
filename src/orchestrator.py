@@ -15,7 +15,7 @@ from src.preprocessor import PreprocessingPipeline
 from src.ocr_engines import OCREngine
 from src.table_detector import TableDetector
 from src.constraint_validator import CellValidator
-from src.utils import save_csv, save_json,load_valid_player_names
+from src.utils import save_csv, save_json, load_valid_player_names
 
 
 class OCRProcessor:

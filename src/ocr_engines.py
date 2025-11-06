@@ -7,6 +7,22 @@ import logging
 import numpy as np
 from typing import Any, List, Optional, Tuple
 
+# OCR engine imports (conditional support)
+try:
+    from paddleocr import PaddleOCR
+except ImportError:
+    PaddleOCR = None
+
+try:
+    import pytesseract
+except ImportError:
+    pytesseract = None
+
+try:
+    import easyocr
+except ImportError:
+    easyocr = None
+
 
 class OCREngine:
     """Unified OCR interface for multiple engines."""
@@ -56,18 +72,21 @@ class OCREngine:
         """
         try:
             if engine_name == 'paddleocr':
-                from paddleocr import PaddleOCR
+                if PaddleOCR is None:
+                    raise ImportError("paddleocr is not installed")
                 return PaddleOCR(
                     use_angle_cls=True,
                     lang='en'
                 )
 
             elif engine_name == 'tesseract':
-                import pytesseract
+                if pytesseract is None:
+                    raise ImportError("pytesseract is not installed")
                 return pytesseract
 
             elif engine_name == 'easyocr':
-                import easyocr
+                if easyocr is None:
+                    raise ImportError("easyocr is not installed")
                 return easyocr.Reader(['en'])
 
         except ImportError as e:
