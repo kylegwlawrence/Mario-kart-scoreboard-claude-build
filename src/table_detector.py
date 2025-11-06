@@ -243,7 +243,7 @@ class TableDetector:
     def annotate_image(
         self,
         image: np.ndarray,
-        predictions: Dict[Tuple[int, int], Tuple[str, float]],
+        predictions: Dict[Tuple[int, int], Tuple[str, float, bool]],
         table_bounds: Tuple[int, int, int, int],
         rows: int = TABLE_ROWS,
         cols: int = TABLE_COLS
@@ -253,7 +253,7 @@ class TableDetector:
 
         Args:
             image: Original image to annotate
-            predictions: Dictionary with (row, col) as key and (text, confidence) as value
+            predictions: Dictionary with (row, col) as key and (text, confidence, passes_validation) as value
             table_bounds: (x, y, width, height) of table
             rows: Number of rows in table
             cols: Number of columns in table
@@ -298,7 +298,7 @@ class TableDetector:
         font_color = (0, 0, 255)  # Red for text
         font_thickness = 1
 
-        for (row, col), (text, confidence) in predictions.items():
+        for (row, col), (text, confidence, passes_validation) in predictions.items():
             if 0 <= row < rows and 0 <= col < cols:
                 cell_x, cell_y, cell_w, cell_h = self.get_cell_coordinates(
                     row, col, table_bounds, rows, cols
