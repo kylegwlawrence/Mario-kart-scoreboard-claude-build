@@ -6,22 +6,9 @@ Handles paddleocr, tesseract, and easyocr.
 import logging
 import numpy as np
 from typing import Any, List, Optional, Tuple
-
-# OCR engine imports (conditional support)
-try:
-    from paddleocr import PaddleOCR
-except ImportError:
-    PaddleOCR = None
-
-try:
-    import pytesseract
-except ImportError:
-    pytesseract = None
-
-try:
-    import easyocr
-except ImportError:
-    easyocr = None
+from paddleocr import PaddleOCR
+import pytesseract
+import easyocr
 
 
 class OCREngine:
@@ -68,29 +55,23 @@ class OCREngine:
             Initialized OCR engine object
 
         Raises:
-            ImportError: If engine library is not installed
+            Exception: If engine initialization fails
         """
         try:
             if engine_name == 'paddleocr':
-                if PaddleOCR is None:
-                    raise ImportError("paddleocr is not installed")
                 return PaddleOCR(
                     use_angle_cls=True,
                     lang='en'
                 )
 
             elif engine_name == 'tesseract':
-                if pytesseract is None:
-                    raise ImportError("pytesseract is not installed")
                 return pytesseract
 
             elif engine_name == 'easyocr':
-                if easyocr is None:
-                    raise ImportError("easyocr is not installed")
                 return easyocr.Reader(['en'])
 
-        except ImportError as e:
-            raise ImportError(f"Failed to import {engine_name}: {e}")
+        except Exception as e:
+            raise Exception(f"Failed to initialize {engine_name}: {e}")
 
     def extract_text(
         self,
