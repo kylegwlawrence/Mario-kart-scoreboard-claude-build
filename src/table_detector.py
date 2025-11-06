@@ -7,6 +7,7 @@ import logging
 import cv2
 import numpy as np
 from typing import List, Optional, Tuple, Dict, Any
+from src import box_bounds
 
 
 class TableDetector:
@@ -273,24 +274,34 @@ class TableDetector:
         else:
             annotated = image.copy()
 
-        table_x, table_y, table_w, table_h = table_bounds
+        # Get image dimensions for percentage-to-pixel conversion
+        img_height, img_width = annotated.shape[:2]
 
-        cell_height = table_h // rows
-        cell_width = table_w // cols
-
-        # Draw gridlines
-        grid_color = (0, 255, 0)  # Green
+        # Draw gridlines using box_bounds definitions
+        grid_color = (0, 0, 255)  # Red
         grid_thickness = 2
 
-        # Vertical lines
-        for col in range(cols + 1):
-            x = table_x + col * cell_width
-            cv2.line(annotated, (x, table_y), (x, table_y + table_h), grid_color, grid_thickness)
+        # Draw vertical lines based on column bounds
+        for col in range(len(box_bounds.COLUMN_BOUNDS)):
+            left_pct, _ = box_bounds.COLUMN_BOUNDS[col]
+            x = int(left_pct * img_width)
+            cv2.line(annotated, (x, 0), (x, img_height), grid_color, grid_thickness)
 
-        # Horizontal lines
-        for row in range(rows + 1):
-            y = table_y + row * cell_height
-            cv2.line(annotated, (table_x, y), (table_x + table_w, y), grid_color, grid_thickness)
+        # Draw right edge for last column
+        _, right_pct = box_bounds.COLUMN_BOUNDS[-1]
+        x = int(right_pct * img_width)
+        cv2.line(annotated, (x, 0), (x, img_height), grid_color, grid_thickness)
+
+        # Draw horizontal lines based on row bounds
+        for row in range(len(box_bounds.ROW_BOUNDS)):
+            top_pct, _ = box_bounds.ROW_BOUNDS[row]
+            y = int(top_pct * img_height)
+            cv2.line(annotated, (0, y), (img_width, y), grid_color, grid_thickness)
+
+        # Draw bottom edge for last row
+        _, bottom_pct = box_bounds.ROW_BOUNDS[-1]
+        y = int(bottom_pct * img_height)
+        cv2.line(annotated, (0, y), (img_width, y), grid_color, grid_thickness)
 
         # Add predicted text with confidence scores
         font = cv2.FONT_HERSHEY_SIMPLEX
