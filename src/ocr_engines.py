@@ -75,7 +75,7 @@ class OCREngine:
     def extract_text(
         self,
         image: np.ndarray,
-        confidence_threshold: float = 0.0
+        confidence_threshold: float = 0.50
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
         """
         Extract text from image using primary engine.
