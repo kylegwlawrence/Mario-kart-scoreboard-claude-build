@@ -113,7 +113,7 @@ class OCREngine:
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
         """Extract text using PaddleOCR."""
         try:
-            result = self.engine.ocr(image, cls=True)
+            result = self.engine.ocr(image)
 
             if not result or not result[0]:
                 return []

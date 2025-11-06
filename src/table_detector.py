@@ -102,27 +102,52 @@ class TableDetector:
         if not contours:
             raise ValueError("No contours found in image")
 
-        # Find the largest rectangular contour (likely the table)
-        best_contour = None
-        best_area = 0
+        # Find large rectangular contours (likely table grid lines)
+        # This handles cases where the table is made of multiple lines
+        large_contours = []
 
         for contour in contours:
-            # Approximate contour to a rectangle
-            epsilon = 0.02 * cv2.arcLength(contour, True)
-            approx = cv2.approxPolyDP(contour, epsilon, True)
+            area = cv2.contourArea(contour)
+            x, y, w, h = cv2.boundingRect(contour)
 
-            # Check if it's roughly rectangular (4 sides)
-            if len(approx) >= 4:
-                area = cv2.contourArea(contour)
-                if area > best_area:
-                    best_area = area
-                    best_contour = contour
+            # Look for contours that are large, fairly rectangular (wide), and reasonably tall
+            # Filter for lines/shapes that are likely parts of the table grid
+            if area > 5000 and w > 200 and h > 20:
+                aspect_ratio = w / h if h > 0 else 0
+                if aspect_ratio > 10:  # Horizontal lines have high aspect ratio
+                    large_contours.append((x, y, w, h))
 
-        if best_contour is None:
-            raise ValueError("No rectangular contour found")
+        if large_contours:
+            # Find the bounding box that encompasses all large contours
+            min_x = min(x for x, y, w, h in large_contours)
+            min_y = min(y for x, y, w, h in large_contours)
+            max_x = max(x + w for x, y, w, h in large_contours)
+            max_y = max(y + h for x, y, w, h in large_contours)
 
-        # Get bounding rectangle
-        x, y, w, h = cv2.boundingRect(best_contour)
+            x, y = min_x, min_y
+            w, h = max_x - min_x, max_y - min_y
+        else:
+            # Fallback: find the largest rectangular contour
+            best_contour = None
+            best_area = 0
+
+            for contour in contours:
+                # Approximate contour to a rectangle
+                epsilon = 0.02 * cv2.arcLength(contour, True)
+                approx = cv2.approxPolyDP(contour, epsilon, True)
+
+                # Check if it's roughly rectangular (4 sides)
+                if len(approx) >= 4:
+                    area = cv2.contourArea(contour)
+                    if area > best_area:
+                        best_area = area
+                        best_contour = contour
+
+            if best_contour is None:
+                raise ValueError("No rectangular contour found")
+
+            # Get bounding rectangle
+            x, y, w, h = cv2.boundingRect(best_contour)
 
         if self.logger:
             self.logger.debug(f"Found table bounds: x={x}, y={y}, w={w}, h={h}")

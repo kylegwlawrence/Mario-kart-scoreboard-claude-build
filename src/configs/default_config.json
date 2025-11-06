@@ -10,30 +10,79 @@
     {
       "retry_attempt": 0,
       "methods": [
-        {"method": "grayscale", "parameters": null},
-        {"method": "gaussian_blur", "parameters": {"kernel": [5, 5], "sigmaX": 0, "sigmaY": 0}},
-        {"method": "threshold", "parameters": {"threshold": 150, "max_value": 255}}
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [
+              5,
+              5
+            ],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "threshold",
+          "parameters": {
+            "threshold": 150,
+            "max_value": 255
+          }
+        }
       ]
     },
     {
       "retry_attempt": 1,
       "methods": [
-        {"method": "grayscale", "parameters": null},
-        {"method": "adaptive_threshold", "parameters": {"max_value": 255, "block_size": 15, "C": -2}}
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "adaptive_threshold",
+          "parameters": {
+            "max_value": 255,
+            "block_size": 15,
+            "C": -2
+          }
+        }
       ]
     },
     {
       "retry_attempt": 2,
       "methods": [
-        {"method": "grayscale", "parameters": null},
-        {"method": "bilateral_filter", "parameters": {"d": 9, "sigmaColor": 75, "sigmaSpace": 75}},
-        {"method": "threshold", "parameters": {"threshold": 150, "max_value": 255}}
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "bilateral_filter",
+          "parameters": {
+            "d": 9,
+            "sigmaColor": 75,
+            "sigmaSpace": 75
+          }
+        },
+        {
+          "method": "threshold",
+          "parameters": {
+            "threshold": 150,
+            "max_value": 255
+          }
+        }
       ]
     }
   ],
   "ocr_config": {
-    "engines": ["paddleocr", "tesseract", "easyocr"],
-    "primary_engine": "paddleocr",
+    "engines": [
+      "paddleocr",
+      "tesseract",
+      "easyocr"
+    ],
+    "primary_engine": "tesseract",
     "confidence_threshold": 0.5
   },
   "table_detection": {
@@ -43,7 +92,10 @@
   "retry_config": {
     "max_attempts": 3,
     "retry_on_low_confidence": true,
-    "retry_strategies": ["preprocessing", "ocr_engine"]
+    "retry_strategies": [
+      "preprocessing",
+      "ocr_engine"
+    ]
   },
   "character_names_csv": "character_info.csv"
 }
