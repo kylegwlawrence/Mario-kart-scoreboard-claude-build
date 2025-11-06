@@ -123,10 +123,9 @@ class OCREngine:
                 text = line[1][0]
                 confidence = line[1][1]
 
-                if confidence >= confidence_threshold:
-                    # Convert coordinates from list of lists to list of tuples
-                    coords = [(float(p[0]), float(p[1])) for p in line[0]]
-                    extractions.append((text, confidence, coords))
+                # Convert coordinates from list of lists to list of tuples
+                coords = [(float(p[0]), float(p[1])) for p in line[0]]
+                extractions.append((text, confidence, coords))
 
             return extractions
 
@@ -152,17 +151,16 @@ class OCREngine:
                 # Tesseract confidence is 0-100
                 confidence = data['conf'][i] / 100.0
 
-                if confidence >= confidence_threshold:
-                    x, y = data['left'][i], data['top'][i]
-                    w, h = data['width'][i], data['height'][i]
-                    # Create bounding box coordinates
-                    coords = [
-                        (x, y),
-                        (x + w, y),
-                        (x + w, y + h),
-                        (x, y + h)
-                    ]
-                    extractions.append((text, confidence, coords))
+                x, y = data['left'][i], data['top'][i]
+                w, h = data['width'][i], data['height'][i]
+                # Create bounding box coordinates
+                coords = [
+                    (x, y),
+                    (x + w, y),
+                    (x + w, y + h),
+                    (x, y + h)
+                ]
+                extractions.append((text, confidence, coords))
 
             return extractions
 
@@ -185,10 +183,9 @@ class OCREngine:
             for detection in result:
                 coords, text, confidence = detection
 
-                if confidence >= confidence_threshold:
-                    # Coordinates are already in the right format
-                    coords_list = [(float(p[0]), float(p[1])) for p in coords]
-                    extractions.append((text, confidence, coords_list))
+                # Coordinates are already in the right format
+                coords_list = [(float(p[0]), float(p[1])) for p in coords]
+                extractions.append((text, confidence, coords_list))
 
             return extractions
 

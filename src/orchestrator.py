@@ -402,8 +402,9 @@ class OCRProcessor:
 
         for attempt in range(max_attempts):
             try:
-                # Perform OCR
-                ocr_results = self.ocr_engine.extract_text(cell_image, confidence_threshold)
+                # Perform OCR - use 0.0 threshold to get all predictions regardless of confidence
+                # All predictions will be included in output for analysis
+                ocr_results = self.ocr_engine.extract_text(cell_image, 0.0)
 
                 if not ocr_results:
                     if self.logger:
