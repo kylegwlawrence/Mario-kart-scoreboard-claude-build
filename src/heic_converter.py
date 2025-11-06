@@ -7,6 +7,8 @@ Converts Apple's HEIC/HEIF image format to PNG.
 import logging
 from pathlib import Path
 from typing import Optional
+from PIL import Image
+import pillow_heif
 
 
 def convert_heic_to_png(
@@ -45,24 +47,8 @@ def convert_heic_to_png(
 
     output_file = Path(output_path)
 
-    try:
-        from PIL import Image
-        # Register HEIF/HEIC support
-        try:
-            import pillow_heif
-            pillow_heif.register_heif_opener()
-        except ImportError:
-            raise ImportError(
-                "pillow-heif library is required for HEIC conversion. "
-                "Install it with: pip install pillow-heif"
-            )
-    except ImportError as e:
-        if "pillow" in str(e).lower():
-            raise ImportError(
-                "pillow library is required for HEIC conversion. "
-                "Install it with: pip install pillow pillow-heif"
-            )
-        raise
+    # Register HEIF/HEIC support
+    pillow_heif.register_heif_opener()
 
     try:
         # Open HEIC image
