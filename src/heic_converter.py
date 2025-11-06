@@ -123,7 +123,7 @@ def batch_convert_heic_to_png(
 
     for heic_file in heic_files:
         try:
-            output_path = output_directory / heic_file.stem / '.png'
+            output_path = output_directory / heic_file.with_suffix('.png').name
             png_path = convert_heic_to_png(str(heic_file), str(output_path), logger)
             converted_files.append(png_path)
 
