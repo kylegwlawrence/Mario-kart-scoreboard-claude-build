@@ -109,9 +109,9 @@ class OCRProcessor:
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-        # Console handler
+        # Console handler - only show warnings and errors to user
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG if debug else logging.INFO)
+        console_handler.setLevel(logging.DEBUG if debug else logging.WARNING)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
