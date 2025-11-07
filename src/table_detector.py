@@ -313,7 +313,7 @@ class TableDetector:
 
         # Add predicted text with confidence scores
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.6
+        font_scale = 1.5
         font_color = (0, 0, 255)  # Red for text
         font_thickness = 1
 
@@ -346,7 +346,7 @@ class TableDetector:
 
                 # Add confidence score below text
                 conf_label = f"({confidence:.2f})"
-                conf_size = cv2.getTextSize(conf_label, font, 0.4, 1)[0]
+                conf_size = cv2.getTextSize(conf_label, font, 1, 1)[0]
                 conf_x = cell_x + (cell_w - conf_size[0]) // 2
                 conf_y = text_y + 15
 
