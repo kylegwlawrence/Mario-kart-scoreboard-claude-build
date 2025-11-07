@@ -85,10 +85,6 @@
     "primary_engine": "tesseract",
     "confidence_threshold": 0.5
   },
-  "table_detection": {
-    "enabled": true,
-    "method": "contour"
-  },
   "retry_config": {
     "max_attempts": 3,
     "retry_on_low_confidence": true,

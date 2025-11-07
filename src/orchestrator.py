@@ -83,12 +83,7 @@ class OCRProcessor:
             logger=self.logger
         )
 
-        table_config = self.config_manager.get_table_detection_config()
-        self.table_detector = TableDetector(
-            enabled=table_config.get('enabled', True),
-            method=table_config.get('method', 'contour'),
-            logger=self.logger
-        )
+        self.table_detector = TableDetector(logger=self.logger)
 
         self.validator = CellValidator(self.valid_player_names, self.logger)
 

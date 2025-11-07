@@ -310,10 +310,13 @@ class TableDetector:
         font_thickness = 1
 
         for (row, col), (text, confidence, passes_validation) in predictions.items():
-            if 0 <= row < rows and 0 <= col < cols:
-                cell_x, cell_y, cell_w, cell_h = self.get_cell_coordinates(
-                    row, col, table_bounds, rows, cols
-                )
+            if 0 <= row < box_bounds.NUM_ROWS and 0 <= col < box_bounds.NUM_COLUMNS:
+                # Use box_bounds to get cell coordinates based on actual column indices
+                left_pct, top_pct, right_pct, bottom_pct = box_bounds.get_cell_bounds(row, col)
+                cell_x = int(left_pct * img_width)
+                cell_y = int(top_pct * img_height)
+                cell_w = int((right_pct - left_pct) * img_width)
+                cell_h = int((bottom_pct - top_pct) * img_height)
 
                 # Add text label above cell
                 text_label = f"{text}"

@@ -52,7 +52,6 @@ class ConfigManager:
             'output_paths',
             'preprocessing_chains',
             'ocr_config',
-            'table_detection',
             'retry_config',
             'character_names_csv'
         ]
@@ -132,9 +131,6 @@ class ConfigManager:
         """Get OCR configuration."""
         return self.config.get('ocr_config', {})
 
-    def get_table_detection_config(self) -> Dict[str, Any]:
-        """Get table detection configuration."""
-        return self.config.get('table_detection', {})
 
     def get_retry_config(self) -> Dict[str, Any]:
         """Get retry configuration."""
@@ -188,10 +184,6 @@ class ConfigManager:
                 "engines": ["paddleocr", "tesseract", "easyocr"],
                 "primary_engine": "paddleocr",
                 "confidence_threshold": 0.5
-            },
-            "table_detection": {
-                "enabled": True,
-                "method": "contour"
             },
             "retry_config": {
                 "max_attempts": 3,

@@ -136,15 +136,11 @@
       "tesseract",
       "easyocr"
     ],
-    "primary_engine": "easyocr",
+    "primary_engine": "paddleocr",
     "confidence_threshold": 0.5
   },
-  "table_detection": {
-    "enabled": true,
-    "method": "contour"
-  },
   "retry_config": {
-    "max_attempts": 4,
+    "max_attempts": 3,
     "retry_on_low_confidence": true,
     "retry_strategies": [
       "preprocessing",
