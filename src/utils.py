@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 def setup_logger(
     name: str,
     log_dir: str,
-    debug: bool = True,
+    debug: bool = False,
     console_output: bool = True,
     console_level: Optional[int] = None
 ) -> logging.Logger:
@@ -26,7 +26,7 @@ def setup_logger(
         log_dir: Directory to save log files
         debug: Enable debug mode (verbose logging)
         console_output: Whether to print to console
-        console_level: Log level for console handler (defaults to DEBUG in debug mode, INFO otherwise)
+        console_level: Log level for console handler (defaults to DEBUG in debug mode, WARNING otherwise)
 
     Returns:
         Configured logger instance
@@ -36,7 +36,7 @@ def setup_logger(
 
     # Create logger
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG if debug else logging.INFO)
+    logger.setLevel(logging.DEBUG if debug else logging.WARNING)
 
     # Clear existing handlers
     logger.handlers.clear()
@@ -50,7 +50,7 @@ def setup_logger(
     # File handler
     log_file = os.path.join(log_dir, f'{name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log')
     file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG if debug else logging.INFO)
+    file_handler.setLevel(logging.DEBUG if debug else logging.WARNING)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
@@ -60,7 +60,7 @@ def setup_logger(
         if console_level is not None:
             console_handler.setLevel(console_level)
         else:
-            console_handler.setLevel(logging.DEBUG if debug else logging.INFO)
+            console_handler.setLevel(logging.DEBUG if debug else logging.WARNING)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 

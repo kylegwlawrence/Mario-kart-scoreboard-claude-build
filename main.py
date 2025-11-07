@@ -50,7 +50,7 @@ Examples:
     )
     parser.add_argument(
         '--debug',
-        action='store_true',
+        action='store_false',
         help='Enable debug logging'
     )
 

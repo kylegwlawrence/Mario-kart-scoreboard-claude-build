@@ -25,7 +25,7 @@ class OCRProcessor:
     def __init__(
         self,
         config_path: str,
-        debug: bool = False
+        debug: bool = None
     ):
         """
         Initialize OCR processor.
@@ -36,8 +36,11 @@ class OCRProcessor:
 
         Raises:
             IOError: If config or supporting files cannot be loaded
-            ValueError: If config validation fails
+            ValueError: If config validation fails or debug is not a boolean
         """
+        if not isinstance(debug, bool):
+            raise ValueError(f"debug parameter must be a boolean, got {type(debug).__name__}")
+
         self.debug = debug
 
         # Set up logging
@@ -46,8 +49,7 @@ class OCRProcessor:
             name='OCRProcessor',
             log_dir=log_dir,
             debug=debug,
-            console_output=True,
-            console_level=logging.DEBUG if debug else logging.WARNING
+            console_output=True
         )
 
         self.logger.info("=" * 80)
