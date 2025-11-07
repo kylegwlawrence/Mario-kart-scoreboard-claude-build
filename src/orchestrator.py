@@ -327,7 +327,8 @@ class OCRProcessor:
                 cell_image,
                 row,
                 col,
-                retry_attempts
+                retry_attempts,
+                predictions
             )
 
             if cell_text is not None:
@@ -354,7 +355,8 @@ class OCRProcessor:
         cell_image: np.ndarray,
         row: int,
         col: int,
-        retry_attempts: int
+        retry_attempts: int,
+        predictions: Optional[Dict[Tuple[int, int], Tuple[str, float, bool]]] = None
     ) -> Tuple[Optional[str], float, bool]:
         """
         Process a single cell with retry logic using attempt-specific preprocessing chains.
@@ -364,12 +366,26 @@ class OCRProcessor:
             row: Row index
             col: Column index
             retry_attempts: Maximum retry attempts
+            predictions: Dictionary of (row, col) -> (text, confidence, passes_validation) for previous rows
 
         Returns:
             Tuple of (text, confidence, passes_validation) where passes_validation is True only if text is valid
         """
         last_extracted_text = None
         last_confidence = 0.0
+
+        # Get previous row's place for ordering validation (only for place column)
+        previous_place = None
+        if col == 1 and predictions is not None and row > 0:
+            prev_key = (row - 1, 1)
+            if prev_key in predictions:
+                prev_text, _, prev_passes_validation = predictions[prev_key]
+                # Only use previous place if it passed validation
+                if prev_passes_validation:
+                    try:
+                        previous_place = int(prev_text)
+                    except (ValueError, TypeError):
+                        pass
 
         for attempt in range(retry_attempts):
             try:
@@ -406,8 +422,8 @@ class OCRProcessor:
                 last_extracted_text = text
                 last_confidence = confidence
 
-                # Validate
-                is_valid, validated_text, error_msg = self.validator.validate_cell(col, text)
+                # Validate (pass previous_place for place column ordering validation)
+                is_valid, validated_text, error_msg = self.validator.validate_cell(col, text, previous_place=previous_place)
 
                 if is_valid:
                     if self.logger:

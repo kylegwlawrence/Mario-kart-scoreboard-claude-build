@@ -34,12 +34,17 @@ class CellValidator:
         self.valid_player_names = valid_player_names
         self.logger = logger
 
-    def validate_place(self, value: str) -> Tuple[bool, Optional[int], str]:
+    def validate_place(
+        self,
+        value: str,
+        previous_place: Optional[int] = None
+    ) -> Tuple[bool, Optional[int], str]:
         """
-        Validate place/rank (1-12).
+        Validate place/rank (1-12) with optional ordering constraint.
 
         Args:
             value: Extracted text for place
+            previous_place: Previous row's place value (for ordering validation)
 
         Returns:
             Tuple of (is_valid, parsed_value, error_message)
@@ -50,6 +55,10 @@ class CellValidator:
 
             if not (self.PLACE_MIN <= place <= self.PLACE_MAX):
                 return False, None, f"Place {place} not in range 1-12"
+
+            # Check ordering constraint if previous_place is provided
+            if previous_place is not None and place < previous_place:
+                return False, None, f"Place {place} is less than previous row's place {previous_place}"
 
             return True, place, ""
 
@@ -127,7 +136,8 @@ class CellValidator:
         self,
         column: int,
         value: str,
-        fuzzy_threshold: float = 0.8
+        fuzzy_threshold: float = 0.8,
+        previous_place: Optional[int] = None
     ) -> Tuple[bool, Optional[any], str]:
         """
         Validate a cell value based on its column.
@@ -136,6 +146,7 @@ class CellValidator:
             column: Column index (1=place, 2=name, 4=score)
             value: Extracted text
             fuzzy_threshold: Fuzzy match threshold for names
+            previous_place: Previous row's place value (for place ordering validation)
 
         Returns:
             Tuple of (is_valid, parsed_value, error_message)
@@ -144,7 +155,7 @@ class CellValidator:
             ValueError: If column index is invalid
         """
         if column == 1:
-            return self.validate_place(value)
+            return self.validate_place(value, previous_place)
         elif column == 2:
             return self.validate_player_name(value, fuzzy_threshold)
         elif column == 4:
