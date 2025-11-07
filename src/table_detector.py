@@ -252,10 +252,10 @@ class TableDetector:
         rows: int = TABLE_ROWS,
         cols: int = TABLE_COLS,
         predicted_text_size: float = 3,
-        predicted_text_thickness: int = 6,
-        conf_text_size: float = 1.5,
+        predicted_text_thickness: int = 8,
+        conf_text_size: float = 1,
         conf_text_thickness: int = 3,
-        font_color: Tuple[int, int, int] = (0, 0, 0)
+        font_color: Tuple[int, int, int] = (0, 0, 150)
     ) -> np.ndarray:
         """
         Create annotated image with gridlines and predicted text.
