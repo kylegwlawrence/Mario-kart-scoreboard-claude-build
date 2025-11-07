@@ -250,7 +250,12 @@ class TableDetector:
         predictions: Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict]],
         table_bounds: Tuple[int, int, int, int],
         rows: int = TABLE_ROWS,
-        cols: int = TABLE_COLS
+        cols: int = TABLE_COLS,
+        predicted_text_size: float = 3,
+        predicted_text_thickness: int = 6,
+        conf_text_size: float = 1.5,
+        conf_text_thickness: int = 3,
+        font_color: Tuple[int, int, int] = (0, 0, 0)
     ) -> np.ndarray:
         """
         Create annotated image with gridlines and predicted text.
@@ -261,6 +266,11 @@ class TableDetector:
             table_bounds: (x, y, width, height) of table
             rows: Number of rows in table
             cols: Number of columns in table
+            predicted_text_size: Font scale for predicted text (default: 3)
+            predicted_text_thickness: Font thickness for predicted text (default: 5)
+            conf_text_size: Font scale for confidence score text (default: 1.5)
+            conf_text_thickness: Font thickness for confidence score text (default: 2)
+            font_color: RGB color tuple for text (default: (0, 0, 255) - red)
 
         Returns:
             Annotated image
@@ -276,6 +286,10 @@ class TableDetector:
             annotated = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         else:
             annotated = image.copy()
+
+        # Lighten the image by blending with white for better text visibility
+        white_overlay = np.ones_like(annotated) * 255
+        annotated = cv2.addWeighted(annotated, 0.7, white_overlay, 0.3, 0)
 
         # Get image dimensions for percentage-to-pixel conversion
         img_height, img_width = annotated.shape[:2]
@@ -313,11 +327,12 @@ class TableDetector:
 
         # Add predicted text with confidence scores
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 3
-        font_color = (0, 0, 255)  # Red for text
-        font_thickness = 3
+        font_scale = predicted_text_size
+        conf_font_scale = conf_text_size
+        font_thickness = predicted_text_thickness
+        conf_font_thickness = conf_text_thickness
 
-        for (row, col), (text, confidence, _) in predictions.items():
+        for (row, col), (text, confidence, _, _, _) in predictions.items():
             if 0 <= row < num_rows and 0 <= col < num_columns:
                 # Use config_manager to get cell coordinates based on actual column indices
                 left_pct, top_pct, right_pct, bottom_pct = self.config_manager.get_cell_bounds(row, col)
@@ -326,13 +341,24 @@ class TableDetector:
                 cell_w = int((right_pct - left_pct) * img_width)
                 cell_h = int((bottom_pct - top_pct) * img_height)
 
-                # Add text label above cell
+                # Add text label centered in cell
                 text_label = f"{text}"
                 text_size = cv2.getTextSize(text_label, font, font_scale, font_thickness)[0]
 
-                # Position text below the cell
+                # Add confidence score below text
+                conf_label = f"({confidence:.2f})"
+                conf_size = cv2.getTextSize(conf_label, font, conf_font_scale, conf_font_thickness)[0]
+
+                # Calculate total height needed for both texts
+                line_spacing = 5
+                total_text_height = text_size[1] + conf_size[1] + line_spacing
+
+                # Center both texts vertically within the cell
+                text_y = cell_y + (cell_h - total_text_height) // 2 + text_size[1]
+                conf_y = text_y + line_spacing + conf_size[1]
+
+                # Center text horizontally
                 text_x = cell_x + (cell_w - text_size[0]) // 2
-                text_y = max(cell_y - 3, 15)
 
                 cv2.putText(
                     annotated,
@@ -344,20 +370,17 @@ class TableDetector:
                     font_thickness
                 )
 
-                # Add confidence score below text
-                conf_label = f"({confidence:.2f})"
-                conf_size = cv2.getTextSize(conf_label, font, 2, 2)[0]
+                # Center confidence score horizontally
                 conf_x = cell_x + (cell_w - conf_size[0]) // 2
-                conf_y = text_y + 15
 
                 cv2.putText(
                     annotated,
                     conf_label,
                     (conf_x, conf_y),
                     font,
-                    0.4,
+                    conf_font_scale,
                     font_color,
-                    1
+                    conf_font_thickness
                 )
 
         if self.logger:
