@@ -7,7 +7,7 @@
     "logs": ".logging"
   },
   "primary_engine": "easyocr",
-  "retry_attempts": 99,
+  "retry_attempts": 11,
   "preprocessing_chains": [
     {
       "retry_attempt": 0,

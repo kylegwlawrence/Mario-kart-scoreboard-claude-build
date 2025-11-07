@@ -116,17 +116,24 @@ class CellValidator:
 
         value = value.strip()
 
-        # Try exact match first
-        if value in self.valid_player_names:
-            return True, value, ""
+        # Normalize function: lowercase and remove spaces
+        def normalize(s: str) -> str:
+            return s.lower().replace(" ", "")
+
+        normalized_value = normalize(value)
+
+        # Try exact match first (normalized)
+        for name in self.valid_player_names:
+            if normalized_value == normalize(name):
+                return True, name, ""
 
         # Try fuzzy matching
         best_match = None
         best_score = 0
 
         for name in self.valid_player_names:
-            # Calculate similarity ratio
-            ratio = SequenceMatcher(None, value.lower(), name.lower()).ratio()
+            # Calculate similarity ratio on normalized strings
+            ratio = SequenceMatcher(None, normalized_value, normalize(name)).ratio()
 
             if ratio > best_score:
                 best_score = ratio

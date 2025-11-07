@@ -454,7 +454,7 @@ class OCRProcessor:
                     self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1} error: {e}")
 
         if self.logger and last_extracted_text is not None:
-            self.logger.warning(f"Cell ({row}, {col}): Failed validation after {retry_attempts} attempts, returning extracted text")
+            self.logger.warning(f"Cell ({row}, {col}): Failed validation after {retry_attempts} attempts, last extracted text: {last_extracted_text}, confidence: {last_confidence}")
 
         # Return the last extracted text with validation status as False
         if last_extracted_text is not None:
