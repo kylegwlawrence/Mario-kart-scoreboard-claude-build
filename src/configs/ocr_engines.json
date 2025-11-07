@@ -1,5 +1,5 @@
 {
-  "character_names_csv": "character_info.csv",
+  "character_names_csv": "data/character_info.csv",
   "engines": {
     "paddleocr": {
       "use_angle_cls": true,

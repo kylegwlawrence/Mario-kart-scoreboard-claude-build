@@ -255,7 +255,7 @@ class ConfigManager:
 
     def get_character_names_csv(self) -> str:
         """Get character names CSV path from OCR engines config."""
-        return self.ocr_engines_config.get('character_names_csv', 'character_info.csv')
+        return self.ocr_engines_config.get('character_names_csv', 'data/character_info.csv')
 
     def get_table_bounds(self) -> Dict[str, Any]:
         """Get table bounds configuration from grid config."""
@@ -338,5 +338,5 @@ class ConfigManager:
                     ]
                 }
             ],
-            "character_names_csv": "character_info.csv"
+            "character_names_csv": "data/character_info.csv"
         }
