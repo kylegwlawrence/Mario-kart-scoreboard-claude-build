@@ -65,7 +65,7 @@ class ConfigManager:
             raise ValueError(f"Missing required config fields: {missing_fields}")
 
         # Validate output_paths
-        required_output_paths = ['preprocessed', 'annotated', 'predictions', 'logs']
+        required_output_paths = ['preprocessed', 'annotated', 'predictions', 'cell_images', 'logs']
         missing_paths = [p for p in required_output_paths if p not in config['output_paths']]
         if missing_paths:
             raise ValueError(f"Missing required output paths: {missing_paths}")
