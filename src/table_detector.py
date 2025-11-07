@@ -330,9 +330,9 @@ class TableDetector:
                 text_label = f"{text}"
                 text_size = cv2.getTextSize(text_label, font, font_scale, font_thickness)[0]
 
-                # Position text on the cell
+                # Position text below the cell
                 text_x = cell_x + (cell_w - text_size[0]) // 2
-                text_y = max(cell_y - 0, 15)
+                text_y = max(cell_y - 3, 15)
 
                 cv2.putText(
                     annotated,

@@ -7,7 +7,7 @@
     "logs": ".logging"
   },
   "primary_engine": "easyocr",
-  "retry_attempts": 3,
+  "retry_attempts": 7,
   "preprocessing_chains": [
     {
       "retry_attempt": 0,
@@ -19,10 +19,7 @@
         {
           "method": "gaussian_blur",
           "parameters": {
-            "kernel": [
-              7,
-              7
-            ],
+            "kernel": [5,5],
             "sigmaX": 0,
             "sigmaY": 0
           }
@@ -30,8 +27,80 @@
         {
           "method": "edge_detection",
           "parameters": {
-            "hysteresis_min": 120,
-            "hysteresis_max": 170
+            "hysteresis_min": 100,
+            "hysteresis_max": 150
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 1,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 100,
+            "hysteresis_max": 150
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 2,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [9,9],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 100,
+            "hysteresis_max": 150
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 3,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 100,
+            "hysteresis_max": 150
           }
         },
         {
@@ -49,12 +118,8 @@
       ]
     },
     {
-      "retry_attempt": 1,
+      "retry_attempt": 4,
       "methods": [
-        {
-          "method": "downscale",
-          "parameters": {"scale_factor": 0.5}
-        },
         {
           "method": "grayscale",
           "parameters": null
@@ -62,10 +127,7 @@
         {
           "method": "gaussian_blur",
           "parameters": {
-            "kernel": [
-              7,
-              7
-            ],
+            "kernel": [7,7],
             "sigmaX": 0,
             "sigmaY": 0
           }
@@ -73,7 +135,43 @@
         {
           "method": "edge_detection",
           "parameters": {
-            "hysteresis_min": 125,
+            "hysteresis_min": 100,
+            "hysteresis_max": 150
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 5,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 100,
             "hysteresis_max": 175
           }
         },
@@ -92,12 +190,8 @@
       ]
     },
     {
-      "retry_attempt": 2,
+      "retry_attempt": 6,
       "methods": [
-        {
-          "method": "downscale",
-          "parameters": {"scale_factor": 0.5}
-        },
         {
           "method": "grayscale",
           "parameters": null
@@ -120,13 +214,13 @@
         {
           "method": "dilate",
           "parameters": {
-            "kernel": [7,7]
+            "kernel": [5,5]
           }
         },
         {
           "method": "erode",
           "parameters": {
-            "kernel": [7,7]
+            "kernel": [5,5]
           }
         }
       ]
