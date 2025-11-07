@@ -138,12 +138,7 @@ Example custom config structure:
   ],
   "ocr_config": {
     "engines": ["paddleocr", "tesseract", "easyocr"],
-    "primary_engine": "tesseract",
-    "confidence_threshold": 0.6
-  },
-  "table_detection": {
-    "enabled": true,
-    "method": "contour"
+    "primary_engine": "tesseract"
   },
   "retry_config": {
     "max_attempts": 5,

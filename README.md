@@ -119,12 +119,7 @@ The default configuration is located in `src/configs/default_config.json`. Creat
   ],
   "ocr_config": {
     "engines": ["paddleocr", "tesseract", "easyocr"],
-    "primary_engine": "paddleocr",
-    "confidence_threshold": 0.5
-  },
-  "table_detection": {
-    "enabled": true,
-    "method": "contour"
+    "primary_engine": "paddleocr"
   },
   "retry_config": {
     "max_attempts": 3,

@@ -339,17 +339,14 @@ class OCRProcessor:
         predictions = {}
         failed_cells = []
         retry_config = self.config_manager.get_retry_config()
-        ocr_config = self.config_manager.get_ocr_config()
         max_attempts = retry_config.get('max_attempts', 3)
-        confidence_threshold = ocr_config.get('confidence_threshold', 0.5)
 
         for (row, col), cell_image in sorted(cells.items()):
             cell_text, cell_confidence, passes_validation = self._process_cell_with_retry(
                 cell_image,
                 row,
                 col,
-                max_attempts,
-                confidence_threshold
+                max_attempts
             )
 
             if cell_text is not None:
@@ -376,8 +373,7 @@ class OCRProcessor:
         cell_image: np.ndarray,
         row: int,
         col: int,
-        max_attempts: int,
-        confidence_threshold: float
+        max_attempts: int
     ) -> Tuple[Optional[str], float, bool]:
         """
         Process a single cell with retry logic.
@@ -387,7 +383,6 @@ class OCRProcessor:
             row: Row index
             col: Column index
             max_attempts: Maximum retry attempts
-            confidence_threshold: Minimum confidence threshold
 
         Returns:
             Tuple of (text, confidence, passes_validation) where passes_validation is True only if text is valid

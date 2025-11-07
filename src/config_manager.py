@@ -182,8 +182,7 @@ class ConfigManager:
             ],
             "ocr_config": {
                 "engines": ["paddleocr", "tesseract", "easyocr"],
-                "primary_engine": "paddleocr",
-                "confidence_threshold": 0.5
+                "primary_engine": "paddleocr"
             },
             "retry_config": {
                 "max_attempts": 3,

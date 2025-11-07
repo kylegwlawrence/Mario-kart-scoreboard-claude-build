@@ -82,8 +82,7 @@
       "tesseract",
       "easyocr"
     ],
-    "primary_engine": "tesseract",
-    "confidence_threshold": 0.5
+    "primary_engine": "tesseract"
   },
   "retry_config": {
     "max_attempts": 3,

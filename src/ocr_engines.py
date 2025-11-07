@@ -74,15 +74,13 @@ class OCREngine:
 
     def extract_text(
         self,
-        image: np.ndarray,
-        confidence_threshold: float = 0.50
+        image: np.ndarray
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
         """
         Extract text from image using primary engine.
 
         Args:
             image: Input image as numpy array
-            confidence_threshold: Minimum confidence score (0-1)
 
         Returns:
             List of tuples: (text, confidence, coordinates)
@@ -93,13 +91,13 @@ class OCREngine:
         """
         try:
             if self.primary_engine == 'paddleocr':
-                return self._extract_text_paddleocr(image, confidence_threshold)
+                return self._extract_text_paddleocr(image)
 
             elif self.primary_engine == 'tesseract':
-                return self._extract_text_tesseract(image, confidence_threshold)
+                return self._extract_text_tesseract(image)
 
             elif self.primary_engine == 'easyocr':
-                return self._extract_text_easyocr(image, confidence_threshold)
+                return self._extract_text_easyocr(image)
 
         except Exception as e:
             if self.logger:
@@ -108,8 +106,7 @@ class OCREngine:
 
     def _extract_text_paddleocr(
         self,
-        image: np.ndarray,
-        confidence_threshold: float = 0.0
+        image: np.ndarray
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
         """Extract text using PaddleOCR."""
         try:
@@ -134,8 +131,7 @@ class OCREngine:
 
     def _extract_text_tesseract(
         self,
-        image: np.ndarray,
-        confidence_threshold: float = 0.0
+        image: np.ndarray
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
         """Extract text using Tesseract."""
         try:
@@ -169,8 +165,7 @@ class OCREngine:
 
     def _extract_text_easyocr(
         self,
-        image: np.ndarray,
-        confidence_threshold: float = 0.0
+        image: np.ndarray
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
         """Extract text using EasyOCR."""
         try:
