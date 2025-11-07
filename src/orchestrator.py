@@ -10,6 +10,7 @@ import numpy as np
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
+import uuid
 
 from src.config_manager import ConfigManager
 from src.preprocessor import PreprocessingPipeline
@@ -120,6 +121,10 @@ class OCRProcessor:
         """
         self.logger.info(f"\nProcessing image: {image_path}")
 
+        # Generate unique ID for this pipeline run
+        run_id = uuid.uuid4().hex[:8]
+        self.logger.info(f"Run ID: {run_id}")
+
         # Load image
         try:
             # Ensure path is a string
@@ -145,7 +150,7 @@ class OCRProcessor:
             raise
 
         # Save preprocessed image
-        preprocessed_path = Path(self.output_paths['preprocessed']) / f"{output_filename_prefix}_preprocessed.png"
+        preprocessed_path = Path(self.output_paths['preprocessed']) / f"{output_filename_prefix}_{run_id}_preprocessed.png"
         try:
             self.preprocessing.save_preprocessed_image(preprocessed_image, str(preprocessed_path))
         except IOError as e:
@@ -177,7 +182,7 @@ class OCRProcessor:
                 predictions,
                 table_bounds
             )
-            annotated_path = Path(self.output_paths['annotated']) / f"{output_filename_prefix}_annotated.jpg"
+            annotated_path = Path(self.output_paths['annotated']) / f"{output_filename_prefix}_{run_id}_annotated.jpg"
             cv2.imwrite(str(annotated_path), annotated_image, [cv2.IMWRITE_JPEG_QUALITY, 90])
             self.logger.info(f"Saved annotated image: {annotated_path}")
         except Exception as e:
@@ -195,6 +200,7 @@ class OCRProcessor:
             process_start_time,
             process_end_time,
             output_filename_prefix,
+            run_id,
             img_w,
             img_h
         )
@@ -482,6 +488,7 @@ class OCRProcessor:
         process_start_time: str,
         process_end_time: str,
         filename_prefix: str,
+        run_id: str,
         img_width: int,
         img_height: int
     ) -> Dict[str, Any]:
@@ -496,6 +503,7 @@ class OCRProcessor:
             process_start_time: Timestamp when processing started
             process_end_time: Timestamp when processing ended
             filename_prefix: Prefix for output files
+            run_id: Unique ID for this pipeline run
             img_width: Original image width
             img_height: Original image height
 
@@ -543,7 +551,7 @@ class OCRProcessor:
             })
 
         # Save CSV
-        csv_path = Path(self.output_paths['predictions']) / f"{filename_prefix}_predictions.csv"
+        csv_path = Path(self.output_paths['predictions']) / f"{filename_prefix}_{run_id}_predictions.csv"
         try:
             fieldnames = [
                 'row_id', 'column_id', 'predicted_text', 'confidence', 'passes_validation',
