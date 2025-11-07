@@ -18,8 +18,8 @@
           "method": "gaussian_blur",
           "parameters": {
             "kernel": [
-              5,
-              5
+              7,
+              7
             ],
             "sigmaX": 0,
             "sigmaY": 0
@@ -28,8 +28,8 @@
         {
           "method": "edge_detection",
           "parameters": {
-            "hysteresis_min": 150,
-            "hysteresis_max": 200
+            "hysteresis_min": 120,
+            "hysteresis_max": 170
           }
         },
         {
@@ -50,7 +50,7 @@
       "retry_attempt": 1,
       "methods": [
         {
-          "method": "down_scale",
+          "method": "downscale",
           "parameters": {"scale_factor": 0.5}
         },
         {
@@ -64,46 +64,6 @@
               7,
               7
             ],
-            "sigmaX": 0,
-            "sigmaY": 0
-          }
-        },
-        {
-          "method": "edge_detection",
-          "parameters": {
-            "hysteresis_min": 150,
-            "hysteresis_max": 200
-          }
-        },
-        {
-          "method": "dilate",
-          "parameters": {
-            "kernel": [7,7]
-          }
-        },
-        {
-          "method": "erode",
-          "parameters": {
-            "kernel": [7,7]
-          }
-        }
-      ]
-    },
-    {
-      "retry_attempt": 2,
-      "methods": [
-        {
-          "method": "down_scale",
-          "parameters": {"scale_factor": 0.5}
-        },
-        {
-          "method": "grayscale",
-          "parameters": null
-        },
-        {
-          "method": "gaussian_blur",
-          "parameters": {
-            "kernel": [5,5],
             "sigmaX": 0,
             "sigmaY": 0
           }
@@ -125,6 +85,46 @@
           "method": "erode",
           "parameters": {
             "kernel": [5,5]
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 2,
+      "methods": [
+        {
+          "method": "downscale",
+          "parameters": {"scale_factor": 0.5}
+        },
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 125,
+            "hysteresis_max": 175
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [7,7]
           }
         }
       ]
