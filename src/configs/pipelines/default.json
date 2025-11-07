@@ -6,6 +6,8 @@
     "predictions": "output/predictions",
     "logs": ".logging"
   },
+  "primary_engine": "tesseract",
+  "retry_attempts": 3,
   "preprocessing_chains": [
     {
       "retry_attempt": 0,
@@ -75,22 +77,5 @@
         }
       ]
     }
-  ],
-  "ocr_config": {
-    "engines": [
-      "paddleocr",
-      "tesseract",
-      "easyocr"
-    ],
-    "primary_engine": "tesseract"
-  },
-  "retry_config": {
-    "max_attempts": 3,
-    "retry_on_low_confidence": true,
-    "retry_strategies": [
-      "preprocessing",
-      "ocr_engine"
-    ]
-  },
-  "character_names_csv": "character_info.csv"
+  ]
 }

@@ -5,10 +5,13 @@ Handles paddleocr, tesseract, and easyocr.
 
 import logging
 import numpy as np
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, TYPE_CHECKING
 from paddleocr import PaddleOCR
 import pytesseract
 import easyocr
+
+if TYPE_CHECKING:
+    from src.config_manager import ConfigManager
 
 
 class OCREngine:
@@ -18,13 +21,15 @@ class OCREngine:
 
     def __init__(
         self,
+        config_manager: 'ConfigManager',
         primary_engine: str = 'paddleocr',
         logger: Optional[logging.Logger] = None
     ):
         """
-        Initializes the OCR engine specified as primary. 
+        Initializes the OCR engine specified as primary.
 
         Args:
+            config_manager: Configuration manager instance for loading engine parameters
             primary_engine: Primary OCR engine to use
             logger: Logger instance
 
@@ -34,6 +39,7 @@ class OCREngine:
         if primary_engine not in self.SUPPORTED_ENGINES:
             raise ValueError(f"Unsupported engine: {primary_engine}. Must be one of {self.SUPPORTED_ENGINES}")
 
+        self.config_manager = config_manager
         self.primary_engine = primary_engine
         self.logger = logger
 
@@ -45,7 +51,7 @@ class OCREngine:
 
     def _initialize_engine(self, engine_name: str) -> Any:
         """
-        Initialize the specified OCR engine.
+        Initialize the specified OCR engine with parameters from config.
 
         Args:
             engine_name: Name of the engine to initialize
@@ -57,17 +63,25 @@ class OCREngine:
             Exception: If engine initialization fails
         """
         try:
+            # Get engine-specific config
+            engine_config = self.config_manager.get_engine_config(engine_name)
+
             if engine_name == 'paddleocr':
+                # Use config parameters with defaults
+                use_angle_cls = engine_config.get('use_angle_cls', True)
+                lang = engine_config.get('lang', 'en')
                 return PaddleOCR(
-                    use_angle_cls=True,
-                    lang='en'
+                    use_angle_cls=use_angle_cls,
+                    lang=lang
                 )
 
             elif engine_name == 'tesseract':
                 return pytesseract
 
             elif engine_name == 'easyocr':
-                return easyocr.Reader(['en'])
+                # Use config parameters with defaults
+                languages = engine_config.get('languages', ['en'])
+                return easyocr.Reader(languages)
 
         except Exception as e:
             raise Exception(f"Failed to initialize {engine_name}: {e}")

@@ -16,7 +16,7 @@ def example_single_image_processing():
 
     # Initialize the OCR processor with config
     processor = OCRProcessor(
-        config_path='src/configs/default_config.json',
+        config_path='src/configs/pipelines/default.json',
         debug=False  # Set to True for verbose logging
     )
 
@@ -51,7 +51,7 @@ def example_batch_processing():
     print("=" * 80)
 
     processor = OCRProcessor(
-        config_path='src/configs/default_config.json',
+        config_path='src/configs/pipelines/default.json',
         debug=False
     )
 
@@ -106,8 +106,8 @@ def example_with_custom_config():
     print("""
 To use a custom configuration:
 
-1. Create a new JSON file in the src/configs/ directory
-   e.g., src/configs/my_custom_config.json
+1. Create a new JSON file in the src/configs/pipelines/ directory
+   e.g., src/configs/pipelines/my_custom_pipeline.json
 
 2. Customize settings like:
    - Different preprocessing chain
@@ -116,9 +116,13 @@ To use a custom configuration:
    - Different validation thresholds
 
 3. Initialize processor with custom config:
-   processor = OCRProcessor('src/configs/my_custom_config.json')
+   processor = OCRProcessor('src/configs/pipelines/my_custom_pipeline.json')
 
-Example custom config structure:
+Note: Grid bounds and character names are centralized in:
+   - src/configs/grid.json (grid structure - never changes)
+   - src/configs/ocr_engines.json (OCR engine configs and character list)
+
+Example custom pipeline config structure:
 {
   "image_source": "./pngs",
   "output_paths": {
@@ -127,6 +131,8 @@ Example custom config structure:
     "predictions": "output/predictions",
     "logs": ".logging"
   },
+  "primary_engine": "tesseract",
+  "retry_attempts": 5,
   "preprocessing_chains": [
     {
       "retry_attempt": 0,
@@ -135,17 +141,7 @@ Example custom config structure:
         {"method": "bilateral_filter", "parameters": {"d": 9, "sigmaColor": 75, "sigmaSpace": 75}}
       ]
     }
-  ],
-  "ocr_config": {
-    "engines": ["paddleocr", "tesseract", "easyocr"],
-    "primary_engine": "tesseract"
-  },
-  "retry_config": {
-    "max_attempts": 5,
-    "retry_on_low_confidence": true,
-    "retry_strategies": ["preprocessing", "ocr_engine"]
-  },
-  "character_names_csv": "character_info.csv"
+  ]
 }
     """)
 

@@ -16,7 +16,6 @@ from src.ocr_engines import OCREngine
 from src.table_detector import TableDetector
 from src.constraint_validator import CellValidator
 from src.utils import save_csv, save_json, load_valid_player_names
-from src import box_bounds
 
 
 class OCRProcessor:
@@ -76,14 +75,15 @@ class OCRProcessor:
         # Initialize components
         self.preprocessing = PreprocessingPipeline(self.logger)
 
-        ocr_config = self.config_manager.get_ocr_config()
         # get the primary OCR engine from the config files and init the OCR engine
+        primary_engine = self.config_manager.get_primary_engine()
         self.ocr_engine = OCREngine(
-            primary_engine=ocr_config.get('primary_engine', 'paddleocr'),
+            config_manager=self.config_manager,
+            primary_engine=primary_engine,
             logger=self.logger
         )
 
-        self.table_detector = TableDetector(logger=self.logger)
+        self.table_detector = TableDetector(config_manager=self.config_manager, logger=self.logger)
 
         self.validator = CellValidator(self.valid_player_names, self.logger)
 
@@ -223,7 +223,7 @@ class OCRProcessor:
         image: np.ndarray
     ) -> Tuple[np.ndarray, List[str]]:
         """
-        Apply preprocessing to image using configured chain.
+        Apply preprocessing to image using the initial preprocessing chain (retry_attempt=0).
 
         Args:
             image: Input image
@@ -231,15 +231,17 @@ class OCRProcessor:
         Returns:
             Tuple of (preprocessed_image, list_of_applied_methods)
         """
-        preprocessing_chains = self.config_manager.get_preprocessing_chains()
+        # Get the initial preprocessing chain (attempt 0)
+        chain = self.config_manager.get_preprocessing_chain_by_retry_attempt(0)
 
-        if not preprocessing_chains:
-            raise ValueError("No preprocessing chains configured")
+        if chain is None:
+            # Fallback: get first chain if attempt 0 not found
+            chains = self.config_manager.get_preprocessing_chains()
+            if not chains:
+                raise ValueError("No preprocessing chains configured")
+            chain = chains[0]
 
-        # Use first chain by default
-        chain = preprocessing_chains[0]
         methods = chain.get('methods', [])
-
         preprocessed, applied_methods = self.preprocessing.apply_chain(image, methods)
         return preprocessed, applied_methods
 
@@ -264,11 +266,13 @@ class OCRProcessor:
         cells = {}
         img_height, img_width = image.shape[:2]
 
-        for row in range(box_bounds.NUM_ROWS):
+        num_rows = self.config_manager.get_num_rows()
+
+        for row in range(num_rows):
             for col in columns_to_process:
                 try:
-                    # Get percentage bounds from box_bounds
-                    left_pct, top_pct, right_pct, bottom_pct = box_bounds.get_cell_bounds(row, col)
+                    # Get percentage bounds from config_manager
+                    left_pct, top_pct, right_pct, bottom_pct = self.config_manager.get_cell_bounds(row, col)
 
                     # Convert percentage bounds to pixel coordinates
                     x = int(left_pct * img_width)
@@ -309,7 +313,7 @@ class OCRProcessor:
             Tuple of (x, y, width, height) in pixel coordinates
         """
         try:
-            left_pct, top_pct, right_pct, bottom_pct = box_bounds.get_cell_bounds(row, col)
+            left_pct, top_pct, right_pct, bottom_pct = self.config_manager.get_cell_bounds(row, col)
 
             x = int(left_pct * img_width)
             y = int(top_pct * img_height)
@@ -338,15 +342,14 @@ class OCRProcessor:
         """
         predictions = {}
         failed_cells = []
-        retry_config = self.config_manager.get_retry_config()
-        max_attempts = retry_config.get('max_attempts', 3)
+        retry_attempts = self.config_manager.get_retry_attempts()
 
         for (row, col), cell_image in sorted(cells.items()):
             cell_text, cell_confidence, passes_validation = self._process_cell_with_retry(
                 cell_image,
                 row,
                 col,
-                max_attempts
+                retry_attempts
             )
 
             if cell_text is not None:
@@ -373,16 +376,16 @@ class OCRProcessor:
         cell_image: np.ndarray,
         row: int,
         col: int,
-        max_attempts: int
+        retry_attempts: int
     ) -> Tuple[Optional[str], float, bool]:
         """
-        Process a single cell with retry logic.
+        Process a single cell with retry logic using attempt-specific preprocessing chains.
 
         Args:
             cell_image: Cell image
             row: Row index
             col: Column index
-            max_attempts: Maximum retry attempts
+            retry_attempts: Maximum retry attempts
 
         Returns:
             Tuple of (text, confidence, passes_validation) where passes_validation is True only if text is valid
@@ -390,10 +393,30 @@ class OCRProcessor:
         last_extracted_text = None
         last_confidence = 0.0
 
-        for attempt in range(max_attempts):
+        for attempt in range(retry_attempts):
             try:
+                # Get preprocessing chain for this retry attempt
+                chain = self.config_manager.get_preprocessing_chain_by_retry_attempt(attempt)
+
+                # Skip attempt if no matching chain found
+                if chain is None:
+                    if self.logger:
+                        self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1}: No preprocessing chain found, skipping")
+                    continue
+
+                # Apply preprocessing specific to this retry attempt
+                methods = chain.get('methods', [])
+                preprocessed_cell, applied_methods = self.preprocessing.apply_chain(cell_image, methods)
+
+                if self.logger:
+                    self.logger.debug(
+                        f"Cell ({row}, {col}) attempt {attempt + 1}: "
+                        f"Using preprocessing chain retry_attempt={chain.get('retry_attempt', '?')} "
+                        f"({len(applied_methods)} methods)"
+                    )
+
                 # Perform OCR - all predictions will be included in output for analysis
-                ocr_results = self.ocr_engine.extract_text(cell_image)
+                ocr_results = self.ocr_engine.extract_text(preprocessed_cell)
 
                 if not ocr_results:
                     if self.logger:
@@ -424,7 +447,7 @@ class OCRProcessor:
                     self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1} error: {e}")
 
         if self.logger and last_extracted_text is not None:
-            self.logger.warning(f"Cell ({row}, {col}): Failed validation after {max_attempts} attempts, returning extracted text")
+            self.logger.warning(f"Cell ({row}, {col}): Failed validation after {retry_attempts} attempts, returning extracted text")
 
         # Return the last extracted text with validation status as False
         if last_extracted_text is not None:

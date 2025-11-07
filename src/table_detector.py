@@ -7,7 +7,7 @@ import logging
 import cv2
 import numpy as np
 from typing import List, Optional, Tuple, Dict, Any
-from src import box_bounds
+from src.config_manager import ConfigManager
 
 
 class TableDetector:
@@ -19,6 +19,7 @@ class TableDetector:
 
     def __init__(
         self,
+        config_manager: ConfigManager,
         enabled: bool = True,
         method: str = 'contour',
         logger: Optional[logging.Logger] = None
@@ -27,10 +28,12 @@ class TableDetector:
         Initialize table detector.
 
         Args:
+            config_manager: Configuration manager instance
             enabled: Whether table detection is enabled
             method: Detection method ('contour' or 'manual')
             logger: Logger instance
         """
+        self.config_manager = config_manager
         self.enabled = enabled
         self.method = method
         self.logger = logger
@@ -277,29 +280,34 @@ class TableDetector:
         # Get image dimensions for percentage-to-pixel conversion
         img_height, img_width = annotated.shape[:2]
 
-        # Draw gridlines using box_bounds definitions
+        # Draw gridlines using config bounds definitions
         grid_color = (0, 0, 255)  # Red
         grid_thickness = 2
 
+        column_bounds = self.config_manager.get_column_bounds()
+        row_bounds = self.config_manager.get_row_bounds()
+        num_rows = self.config_manager.get_num_rows()
+        num_columns = self.config_manager.get_num_columns()
+
         # Draw vertical lines based on column bounds
-        for col in range(len(box_bounds.COLUMN_BOUNDS)):
-            left_pct, _ = box_bounds.COLUMN_BOUNDS[col]
+        for col in range(len(column_bounds)):
+            left_pct, _ = column_bounds[col]
             x = int(left_pct * img_width)
             cv2.line(annotated, (x, 0), (x, img_height), grid_color, grid_thickness)
 
         # Draw right edge for last column
-        _, right_pct = box_bounds.COLUMN_BOUNDS[-1]
+        _, right_pct = column_bounds[-1]
         x = int(right_pct * img_width)
         cv2.line(annotated, (x, 0), (x, img_height), grid_color, grid_thickness)
 
         # Draw horizontal lines based on row bounds
-        for row in range(len(box_bounds.ROW_BOUNDS)):
-            top_pct, _ = box_bounds.ROW_BOUNDS[row]
+        for row in range(len(row_bounds)):
+            top_pct, _ = row_bounds[row]
             y = int(top_pct * img_height)
             cv2.line(annotated, (0, y), (img_width, y), grid_color, grid_thickness)
 
         # Draw bottom edge for last row
-        _, bottom_pct = box_bounds.ROW_BOUNDS[-1]
+        _, bottom_pct = row_bounds[-1]
         y = int(bottom_pct * img_height)
         cv2.line(annotated, (0, y), (img_width, y), grid_color, grid_thickness)
 
@@ -309,10 +317,10 @@ class TableDetector:
         font_color = (0, 0, 255)  # Red for text
         font_thickness = 1
 
-        for (row, col), (text, confidence, passes_validation) in predictions.items():
-            if 0 <= row < box_bounds.NUM_ROWS and 0 <= col < box_bounds.NUM_COLUMNS:
-                # Use box_bounds to get cell coordinates based on actual column indices
-                left_pct, top_pct, right_pct, bottom_pct = box_bounds.get_cell_bounds(row, col)
+        for (row, col), (text, confidence, _) in predictions.items():
+            if 0 <= row < num_rows and 0 <= col < num_columns:
+                # Use config_manager to get cell coordinates based on actual column indices
+                left_pct, top_pct, right_pct, bottom_pct = self.config_manager.get_cell_bounds(row, col)
                 cell_x = int(left_pct * img_width)
                 cell_y = int(top_pct * img_height)
                 cell_w = int((right_pct - left_pct) * img_width)

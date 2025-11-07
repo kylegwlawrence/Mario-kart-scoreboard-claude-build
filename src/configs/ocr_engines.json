@@ -1,0 +1,13 @@
+{
+  "character_names_csv": "character_info.csv",
+  "engines": {
+    "paddleocr": {
+      "use_angle_cls": true,
+      "lang": "en"
+    },
+    "tesseract": {},
+    "easyocr": {
+      "languages": ["en"]
+    }
+  }
+}
