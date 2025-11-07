@@ -4,6 +4,7 @@ Coordinates preprocessing, OCR, validation, and result storage.
 """
 
 import logging
+import json
 import cv2
 import numpy as np
 from pathlib import Path
@@ -15,7 +16,7 @@ from src.preprocessor import PreprocessingPipeline
 from src.ocr_engines import OCREngine
 from src.table_detector import TableDetector
 from src.constraint_validator import CellValidator
-from src.utils import save_csv, save_json, load_valid_player_names, setup_logger
+from src.utils import save_csv, load_valid_player_names, setup_logger
 
 
 class OCRProcessor:
@@ -56,6 +57,7 @@ class OCRProcessor:
 
         # Load configuration
         try:
+            self.config_path = config_path
             self.config_manager = ConfigManager(config_path, self.logger)
             self.config = self.config_manager.config
         except Exception as e:
@@ -182,13 +184,14 @@ class OCRProcessor:
 
         # Prepare and save results
         img_h, img_w = image.shape[:2]
+        process_end_time = datetime.now().isoformat()
         results = self._prepare_results(
             predictions,
             failed_cells,
             image_path,
             str(preprocessed_path),
-            preprocessing_methods,
             process_start_time,
+            process_end_time,
             output_filename_prefix,
             img_w,
             img_h
@@ -307,7 +310,7 @@ class OCRProcessor:
         self,
         cells: Dict[Tuple[int, int], np.ndarray],
         table_bounds: Tuple[int, int, int, int]
-    ) -> Tuple[Dict[Tuple[int, int], Tuple[str, float, bool]], List[Dict[str, Any]]]:
+    ) -> Tuple[Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict]], List[Dict[str, Any]]]:
         """
         Process cells with OCR and validation, with retry logic.
 
@@ -316,14 +319,14 @@ class OCRProcessor:
             table_bounds: Table bounds for coordinate calculation
 
         Returns:
-            Tuple of (predictions_dict with validation status, failed_cells_list)
+            Tuple of (predictions_dict with validation status and pipeline info, failed_cells_list)
         """
         predictions = {}
         failed_cells = []
         retry_attempts = self.config_manager.get_retry_attempts()
 
         for (row, col), cell_image in sorted(cells.items()):
-            cell_text, cell_confidence, passes_validation = self._process_cell_with_retry(
+            cell_text, cell_confidence, passes_validation, retry_attempt_used, chain_config = self._process_cell_with_retry(
                 cell_image,
                 row,
                 col,
@@ -332,20 +335,20 @@ class OCRProcessor:
             )
 
             if cell_text is not None:
-                predictions[(row, col)] = (cell_text, cell_confidence, passes_validation)
+                predictions[(row, col)] = (cell_text, cell_confidence, passes_validation, retry_attempt_used, chain_config)
                 if not passes_validation:
                     failed_cells.append({
                         'row': row,
                         'col': col,
                         'text': cell_text,
                         'confidence': cell_confidence,
-                        'reason': 'Failed validation'
+                        'failed_reason': 'Failed validation'
                     })
             else:
                 failed_cells.append({
                     'row': row,
                     'col': col,
-                    'reason': 'No OCR results extracted'
+                    'failed_reason': 'No OCR results extracted'
                 })
 
         return predictions, failed_cells
@@ -356,8 +359,8 @@ class OCRProcessor:
         row: int,
         col: int,
         retry_attempts: int,
-        predictions: Optional[Dict[Tuple[int, int], Tuple[str, float, bool]]] = None
-    ) -> Tuple[Optional[str], float, bool]:
+        predictions: Optional[Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict]]] = None
+    ) -> Tuple[Optional[str], float, bool, Optional[int], Optional[Dict]]:
         """
         Process a single cell with retry logic using attempt-specific preprocessing chains.
 
@@ -366,20 +369,22 @@ class OCRProcessor:
             row: Row index
             col: Column index
             retry_attempts: Maximum retry attempts
-            predictions: Dictionary of (row, col) -> (text, confidence, passes_validation) for previous rows
+            predictions: Dictionary of (row, col) -> (text, confidence, passes_validation, retry_attempt, chain) for previous rows
 
         Returns:
-            Tuple of (text, confidence, passes_validation) where passes_validation is True only if text is valid
+            Tuple of (text, confidence, passes_validation, retry_attempt_used, chain_config)
         """
         last_extracted_text = None
         last_confidence = 0.0
+        last_chain = None
+        last_attempt = None
 
         # Get previous row's place for ordering validation (only for place column)
         previous_place = None
         if col == 1 and predictions is not None and row > 0:
             prev_key = (row - 1, 1)
             if prev_key in predictions:
-                prev_text, _, prev_passes_validation = predictions[prev_key]
+                prev_text, _, prev_passes_validation, _, _ = predictions[prev_key]
                 # Only use previous place if it passed validation
                 if prev_passes_validation:
                     try:
@@ -392,7 +397,7 @@ class OCRProcessor:
         if col == 4 and predictions is not None and row > 0:
             prev_key = (row - 1, 4)
             if prev_key in predictions:
-                prev_text, _, prev_passes_validation = predictions[prev_key]
+                prev_text, _, prev_passes_validation, _, _ = predictions[prev_key]
                 # Only use previous score if it passed validation
                 if prev_passes_validation:
                     try:
@@ -428,12 +433,16 @@ class OCRProcessor:
                 if not ocr_results:
                     if self.logger:
                         self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1}: No OCR results")
+                    last_chain = chain
+                    last_attempt = attempt
                     continue
 
                 # Take best result
                 text, confidence, coords = ocr_results[0]
                 last_extracted_text = text
                 last_confidence = confidence
+                last_chain = chain
+                last_attempt = attempt
 
                 # Validate (pass previous_place and previous_score for column ordering validation)
                 is_valid, validated_text, error_msg = self.validator.validate_cell(col, text, previous_place=previous_place, previous_score=previous_score)
@@ -441,7 +450,7 @@ class OCRProcessor:
                 if is_valid:
                     if self.logger:
                         self.logger.debug(f"Cell ({row}, {col}): Valid -> {validated_text} (conf: {confidence:.2f})")
-                    return validated_text, confidence, True
+                    return validated_text, confidence, True, attempt, chain
                 else:
                     if self.logger:
                         self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1}: {error_msg}")
@@ -456,34 +465,34 @@ class OCRProcessor:
         if self.logger and last_extracted_text is not None:
             self.logger.warning(f"Cell ({row}, {col}): Failed validation after {retry_attempts} attempts, last extracted text: {last_extracted_text}, confidence: {last_confidence}")
 
-        # Return the last extracted text with validation status as False
+        # Return the last extracted text with validation status as False, including last attempted chain
         if last_extracted_text is not None:
-            return last_extracted_text, last_confidence, False
+            return last_extracted_text, last_confidence, False, last_attempt, last_chain
 
-        return None, 0.0, False
+        return None, 0.0, False, None, None
 
     def _prepare_results(
         self,
-        predictions: Dict[Tuple[int, int], Tuple[str, float, bool]],
+        predictions: Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict]],
         failed_cells: List[Dict[str, Any]],
         image_path: str,
         preprocessed_path: str,
-        preprocessing_methods: List[str],
         process_start_time: str,
+        process_end_time: str,
         filename_prefix: str,
         img_width: int,
         img_height: int
     ) -> Dict[str, Any]:
         """
-        Prepare and save results to CSV and JSON.
+        Prepare and save results to CSV only.
 
         Args:
-            predictions: Dictionary of predictions with validation status (text, confidence, passes_validation)
-            failed_cells: List of failed cells
+            predictions: Dictionary of predictions with validation status, retry attempt, and pipeline config
+            failed_cells: List of failed cells with failed_reason
             image_path: Original image path
             preprocessed_path: Preprocessed image path
-            preprocessing_methods: List of preprocessing methods applied
             process_start_time: Timestamp when processing started
+            process_end_time: Timestamp when processing ended
             filename_prefix: Prefix for output files
             img_width: Original image width
             img_height: Original image height
@@ -491,10 +500,27 @@ class OCRProcessor:
         Returns:
             Dictionary with results metadata
         """
+        # Create a mapping of failed cells for quick lookup
+        failed_reasons = {}
+        for failed_cell in failed_cells:
+            key = (failed_cell['row'], failed_cell['col'])
+            failed_reasons[key] = failed_cell.get('failed_reason', '')
+
+        # Get primary engine from config
+        primary_engine = self.config_manager.get_primary_engine()
+
         # Prepare CSV data
         csv_data = []
-        for (row, col), (text, confidence, passes_validation) in sorted(predictions.items()):
+        for (row, col), (text, confidence, passes_validation, retry_attempt_used, chain_config) in sorted(predictions.items()):
             cell_x, cell_y, cell_w, cell_h = self.get_cell_coordinates_from_grid(row, col, img_width, img_height)
+
+            # Extract pipeline methods from chain_config
+            pipeline_steps = []
+            if chain_config and 'methods' in chain_config:
+                pipeline_steps = chain_config['methods']
+
+            # Get failed reason if applicable
+            failed_reason = failed_reasons.get((row, col), '')
 
             csv_data.append({
                 'row_id': row,
@@ -505,8 +531,13 @@ class OCRProcessor:
                 'text_coordinates': f"({cell_x}, {cell_y}, {cell_w}, {cell_h})",
                 'original_filepath': image_path,
                 'preprocessed_filepath': preprocessed_path,
-                'process_start_timestamp': process_start_time,
-                'preprocessing_methods': '; '.join(preprocessing_methods)
+                'process_start_time': process_start_time,
+                'process_end_time': process_end_time,
+                'primary_engine': primary_engine,
+                'retry_attempt_used': retry_attempt_used if retry_attempt_used is not None else '',
+                'pipeline_steps': json.dumps(pipeline_steps),
+                'pipeline_config_path': self.config_path,
+                'failed_reason': failed_reason
             })
 
         # Save CSV
@@ -515,44 +546,25 @@ class OCRProcessor:
             fieldnames = [
                 'row_id', 'column_id', 'predicted_text', 'confidence', 'passes_validation',
                 'text_coordinates', 'original_filepath', 'preprocessed_filepath',
-                'process_start_timestamp', 'preprocessing_methods'
+                'process_start_time', 'process_end_time', 'primary_engine', 'retry_attempt_used',
+                'pipeline_steps', 'pipeline_config_path', 'failed_reason'
             ]
             save_csv(str(csv_path), csv_data, fieldnames, self.logger)
         except IOError as e:
             self.logger.error(f"Failed to save CSV: {e}")
             raise
 
-        # Save JSON with configuration and metadata
         # Count valid vs invalid predictions
-        valid_count = sum(1 for _, _, passes_validation in predictions.values() if passes_validation)
+        valid_count = sum(1 for _, _, passes_validation, _, _ in predictions.values() if passes_validation)
         invalid_count = len(predictions) - valid_count
-
-        json_data = {
-            'filename_prefix': filename_prefix,
-            'image_path': image_path,
-            'preprocessed_path': preprocessed_path,
-            'process_start_time': process_start_time,
-            'process_end_time': datetime.now().isoformat(),
-            'total_cells': 12 * 3,
-            'extracted_cells': len(predictions),
-            'valid_predictions': valid_count,
-            'invalid_predictions': invalid_count,
-            'failed_cells': len(failed_cells),
-            'preprocessing_config': {
-                'methods_applied': preprocessing_methods,
-                'configuration': self.config_manager.get_preprocessing_chains()[0]
-            },
-            'ocr_config': self.config_manager.get_ocr_config(),
-            'failed_cells_details': failed_cells
-        }
-
-        json_path = Path(self.output_paths['predictions']) / f"{filename_prefix}_metadata.json"
-        try:
-            save_json(str(json_path), json_data, self.logger)
-        except IOError as e:
-            self.logger.error(f"Failed to save JSON: {e}")
-            raise
 
         self.logger.info(f"Processing complete: {valid_count} valid, {invalid_count} invalid, {len(failed_cells)} failed out of {12*3} total cells")
 
-        return json_data
+        # Return summary metadata
+        return {
+            'valid_predictions': valid_count,
+            'invalid_predictions': invalid_count,
+            'failed_cells': len(failed_cells),
+            'extracted_cells': len(predictions),
+            'output_file': str(csv_path)
+        }

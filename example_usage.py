@@ -27,15 +27,14 @@ def example_single_image_processing():
         results = processor.process_image(image_path)
 
         print(f"\nProcessing complete!")
-        print(f"  Total cells: {results['total_cells']}")
+        print(f"  Extracted cells: {results['extracted_cells']}")
         print(f"  Valid predictions: {results['valid_predictions']}")
+        print(f"  Invalid predictions: {results['invalid_predictions']}")
         print(f"  Failed cells: {results['failed_cells']}")
-        print(f"  Process time: {results['process_start_time']} to {results['process_end_time']}")
         print(f"\nOutput files:")
         print(f"  - Preprocessed image: output/preprocessed_images/IMG_7995_preprocessed.png")
         print(f"  - Annotated image: output/annotated_images/IMG_7995_annotated.jpg")
-        print(f"  - Predictions CSV: output/predictions/IMG_7995_predictions.csv")
-        print(f"  - Metadata JSON: output/predictions/IMG_7995_metadata.json")
+        print(f"  - Predictions CSV: {results['output_file']}")
 
     except FileNotFoundError as e:
         print(f"Error: {e}")
@@ -78,7 +77,7 @@ def example_batch_processing():
         try:
             print(f"[{i}] Processing {image_path.name}...", end=" ")
             results = processor.process_image(str(image_path))
-            print(f"OK ({results['valid_predictions']}/{results['total_cells']} cells)")
+            print(f"OK ({results['valid_predictions']}/{results['extracted_cells']} cells)")
             successful += 1
 
         except Exception as e:
@@ -161,23 +160,22 @@ After processing, the following files are generated:
    - column_id: Column in the table (0-2)
    - predicted_text: Extracted and validated text
    - confidence: OCR confidence score (0-1)
+   - passes_validation: Whether prediction passed validation
    - text_coordinates: Pixel coordinates in original image
    - original_filepath: Path to original image
    - preprocessed_filepath: Path to preprocessed image
-   - process_start_timestamp: When processing started
-   - preprocessing_methods: Preprocessing steps applied
+   - process_start_time: When processing started
+   - process_end_time: When processing ended
+   - primary_engine: OCR engine used
+   - retry_attempt_used: Which retry attempt produced the result
+   - pipeline_steps: JSON array of preprocessing steps applied to the cell
+   - pipeline_config_path: Path to the pipeline configuration file used
+   - failed_reason: Reason why prediction failed (empty if successful)
 
-2. Metadata JSON (output/predictions/{image}_metadata.json)
-   Contains:
-   - Image paths and processing times
-   - Configuration used (preprocessing, OCR, retry settings)
-   - Summary of results (valid/failed cells)
-   - Details of failed cells
+2. Preprocessed PNG (output/preprocessed_images/{image}_preprocessed.png)
+   The image after initial preprocessing transformations
 
-3. Preprocessed PNG (output/preprocessed_images/{image}_preprocessed.png)
-   The image after all preprocessing transformations
-
-4. Annotated JPG (output/annotated_images/{image}_annotated.jpg)
+3. Annotated JPG (output/annotated_images/{image}_annotated.jpg)
    Original image with:
    - Green grid lines showing table structure
    - Red text showing OCR predictions
@@ -192,9 +190,10 @@ Example: Reading results programmatically
         reader = csv.DictReader(f)
         predictions = list(reader)
 
-    # Read metadata
-    with open('output/predictions/IMG_7995_metadata.json') as f:
-        metadata = json.load(f)
+        # Access pipeline steps as JSON
+        for row in predictions:
+            pipeline_steps = json.loads(row['pipeline_steps'])
+            print(f"Cell ({row['row_id']}, {row['column_id']}): {len(pipeline_steps)} steps")
     """)
 
 
