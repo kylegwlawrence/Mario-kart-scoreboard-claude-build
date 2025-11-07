@@ -65,12 +65,17 @@ class CellValidator:
         except (ValueError, AttributeError):
             return False, None, f"Could not parse place as integer: {value}"
 
-    def validate_score(self, value: str) -> Tuple[bool, Optional[int], str]:
+    def validate_score(
+        self,
+        value: str,
+        previous_score: Optional[int] = None
+    ) -> Tuple[bool, Optional[int], str]:
         """
-        Validate score (1-999).
+        Validate score (1-999) with optional ordering constraint.
 
         Args:
             value: Extracted text for score
+            previous_score: Previous row's score value (for ordering validation)
 
         Returns:
             Tuple of (is_valid, parsed_value, error_message)
@@ -81,6 +86,10 @@ class CellValidator:
 
             if not (self.SCORE_MIN <= score <= self.SCORE_MAX):
                 return False, None, f"Score {score} not in range 1-999"
+
+            # Check ordering constraint if previous_score is provided
+            if previous_score is not None and score > previous_score:
+                return False, None, f"Score {score} is greater than previous row's score {previous_score}"
 
             return True, score, ""
 
@@ -137,7 +146,8 @@ class CellValidator:
         column: int,
         value: str,
         fuzzy_threshold: float = 0.8,
-        previous_place: Optional[int] = None
+        previous_place: Optional[int] = None,
+        previous_score: Optional[int] = None
     ) -> Tuple[bool, Optional[any], str]:
         """
         Validate a cell value based on its column.
@@ -147,6 +157,7 @@ class CellValidator:
             value: Extracted text
             fuzzy_threshold: Fuzzy match threshold for names
             previous_place: Previous row's place value (for place ordering validation)
+            previous_score: Previous row's score value (for score ordering validation)
 
         Returns:
             Tuple of (is_valid, parsed_value, error_message)
@@ -159,6 +170,6 @@ class CellValidator:
         elif column == 2:
             return self.validate_player_name(value, fuzzy_threshold)
         elif column == 4:
-            return self.validate_score(value)
+            return self.validate_score(value, previous_score)
         else:
             raise ValueError(f"Invalid column index: {column}")

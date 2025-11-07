@@ -387,6 +387,19 @@ class OCRProcessor:
                     except (ValueError, TypeError):
                         pass
 
+        # Get previous row's score for ordering validation (only for score column)
+        previous_score = None
+        if col == 4 and predictions is not None and row > 0:
+            prev_key = (row - 1, 4)
+            if prev_key in predictions:
+                prev_text, _, prev_passes_validation = predictions[prev_key]
+                # Only use previous score if it passed validation
+                if prev_passes_validation:
+                    try:
+                        previous_score = int(prev_text)
+                    except (ValueError, TypeError):
+                        pass
+
         for attempt in range(retry_attempts):
             try:
                 # Get preprocessing chain for this retry attempt
@@ -422,8 +435,8 @@ class OCRProcessor:
                 last_extracted_text = text
                 last_confidence = confidence
 
-                # Validate (pass previous_place for place column ordering validation)
-                is_valid, validated_text, error_msg = self.validator.validate_cell(col, text, previous_place=previous_place)
+                # Validate (pass previous_place and previous_score for column ordering validation)
+                is_valid, validated_text, error_msg = self.validator.validate_cell(col, text, previous_place=previous_place, previous_score=previous_score)
 
                 if is_valid:
                     if self.logger:
