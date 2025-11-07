@@ -313,9 +313,9 @@ class TableDetector:
 
         # Add predicted text with confidence scores
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1.5
+        font_scale = 3
         font_color = (0, 0, 255)  # Red for text
-        font_thickness = 1
+        font_thickness = 3
 
         for (row, col), (text, confidence, _) in predictions.items():
             if 0 <= row < num_rows and 0 <= col < num_columns:
@@ -330,9 +330,9 @@ class TableDetector:
                 text_label = f"{text}"
                 text_size = cv2.getTextSize(text_label, font, font_scale, font_thickness)[0]
 
-                # Position text above the cell
+                # Position text on the cell
                 text_x = cell_x + (cell_w - text_size[0]) // 2
-                text_y = max(cell_y - 5, 15)
+                text_y = max(cell_y - 0, 15)
 
                 cv2.putText(
                     annotated,
@@ -346,7 +346,7 @@ class TableDetector:
 
                 # Add confidence score below text
                 conf_label = f"({confidence:.2f})"
-                conf_size = cv2.getTextSize(conf_label, font, 1, 1)[0]
+                conf_size = cv2.getTextSize(conf_label, font, 2, 2)[0]
                 conf_x = cell_x + (cell_w - conf_size[0]) // 2
                 conf_y = text_y + 15
 
