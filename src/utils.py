@@ -14,8 +14,9 @@ from typing import Any, Dict, List, Optional
 def setup_logger(
     name: str,
     log_dir: str,
-    debug: bool = False,
-    console_output: bool = True
+    debug: bool = True,
+    console_output: bool = True,
+    console_level: Optional[int] = None
 ) -> logging.Logger:
     """
     Set up a logger with both file and console handlers.
@@ -25,6 +26,7 @@ def setup_logger(
         log_dir: Directory to save log files
         debug: Enable debug mode (verbose logging)
         console_output: Whether to print to console
+        console_level: Log level for console handler (defaults to DEBUG in debug mode, INFO otherwise)
 
     Returns:
         Configured logger instance
@@ -55,7 +57,10 @@ def setup_logger(
     # Console handler
     if console_output:
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG if debug else logging.INFO)
+        if console_level is not None:
+            console_handler.setLevel(console_level)
+        else:
+            console_handler.setLevel(logging.DEBUG if debug else logging.INFO)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 

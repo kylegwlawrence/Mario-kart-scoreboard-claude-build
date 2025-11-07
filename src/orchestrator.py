@@ -15,7 +15,7 @@ from src.preprocessor import PreprocessingPipeline
 from src.ocr_engines import OCREngine
 from src.table_detector import TableDetector
 from src.constraint_validator import CellValidator
-from src.utils import save_csv, save_json, load_valid_player_names
+from src.utils import save_csv, save_json, load_valid_player_names, setup_logger
 
 
 class OCRProcessor:
@@ -41,7 +41,13 @@ class OCRProcessor:
 
         # Set up logging
         log_dir = ".logging"
-        self.logger = self._setup_logger(log_dir, debug)
+        self.logger = setup_logger(
+            name='OCRProcessor',
+            log_dir=log_dir,
+            debug=debug,
+            console_output=True,
+            console_level=logging.DEBUG if debug else logging.WARNING
+        )
 
         self.logger.info("=" * 80)
         self.logger.info("Starting OCR Processor")
@@ -88,34 +94,6 @@ class OCRProcessor:
         self.validator = CellValidator(self.valid_player_names, self.logger)
 
         self.logger.info("OCR Processor initialized successfully")
-
-    def _setup_logger(self, log_dir: str, debug: bool) -> logging.Logger:
-        """Set up logger for the processor."""
-        Path(log_dir).mkdir(parents=True, exist_ok=True)
-
-        logger = logging.getLogger('OCRProcessor')
-        logger.setLevel(logging.DEBUG if debug else logging.INFO)
-        logger.handlers.clear()
-
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-
-        # File handler
-        log_file = Path(log_dir) / f'processor_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.DEBUG if debug else logging.INFO)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-
-        # Console handler - only show warnings and errors to user
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG if debug else logging.WARNING)
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-
-        return logger
 
     def process_image(
         self,

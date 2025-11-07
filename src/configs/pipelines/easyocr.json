@@ -7,10 +7,36 @@
     "logs": ".logging"
   },
   "primary_engine": "easyocr",
-  "retry_attempts": 7,
+  "retry_attempts": 99,
   "preprocessing_chains": [
     {
       "retry_attempt": 0,
+      "methods": [
+        {
+          "method": "inversion",
+          "parameters": null
+        },
+        {
+          "method": "grayscale",
+          "parameters": null
+        }
+      ]
+    },
+    {
+      "retry_attempt": 1,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "inversion",
+          "parameters": null
+        }
+      ]
+    },
+    {
+      "retry_attempt": 2,
       "methods": [
         {
           "method": "grayscale",
@@ -25,58 +51,26 @@
           }
         },
         {
-          "method": "edge_detection",
-          "parameters": {
-            "hysteresis_min": 100,
-            "hysteresis_max": 150
-          }
-        }
-      ]
-    },
-    {
-      "retry_attempt": 1,
-      "methods": [
-        {
-          "method": "grayscale",
+          "method": "inversion",
           "parameters": null
         },
         {
-          "method": "gaussian_blur",
-          "parameters": {
-            "kernel": [7,7],
-            "sigmaX": 0,
-            "sigmaY": 0
-          }
-        },
-        {
           "method": "edge_detection",
           "parameters": {
             "hysteresis_min": 100,
             "hysteresis_max": 150
           }
-        }
-      ]
-    },
-    {
-      "retry_attempt": 2,
-      "methods": [
-        {
-          "method": "grayscale",
-          "parameters": null
         },
         {
-          "method": "gaussian_blur",
+          "method": "dilate",
           "parameters": {
-            "kernel": [9,9],
-            "sigmaX": 0,
-            "sigmaY": 0
+            "kernel": [5,5]
           }
         },
         {
-          "method": "edge_detection",
+          "method": "erode",
           "parameters": {
-            "hysteresis_min": 100,
-            "hysteresis_max": 150
+            "kernel": [5,5]
           }
         }
       ]
@@ -102,18 +96,6 @@
             "hysteresis_min": 100,
             "hysteresis_max": 150
           }
-        },
-        {
-          "method": "dilate",
-          "parameters": {
-            "kernel": [5,5]
-          }
-        },
-        {
-          "method": "erode",
-          "parameters": {
-            "kernel": [5,5]
-          }
         }
       ]
     },
@@ -127,7 +109,7 @@
         {
           "method": "gaussian_blur",
           "parameters": {
-            "kernel": [7,7],
+            "kernel": [9,9],
             "sigmaX": 0,
             "sigmaY": 0
           }
@@ -137,18 +119,6 @@
           "parameters": {
             "hysteresis_min": 100,
             "hysteresis_max": 150
-          }
-        },
-        {
-          "method": "dilate",
-          "parameters": {
-            "kernel": [7,7]
-          }
-        },
-        {
-          "method": "erode",
-          "parameters": {
-            "kernel": [7,7]
           }
         }
       ]
@@ -172,7 +142,7 @@
           "method": "edge_detection",
           "parameters": {
             "hysteresis_min": 100,
-            "hysteresis_max": 175
+            "hysteresis_max": 150
           }
         },
         {
@@ -207,6 +177,78 @@
         {
           "method": "edge_detection",
           "parameters": {
+            "hysteresis_min": 100,
+            "hysteresis_max": 150
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 7,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 100,
+            "hysteresis_max": 175
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [5,5]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [5,5]
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 8,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
             "hysteresis_min": 125,
             "hysteresis_max": 175
           }
@@ -221,6 +263,46 @@
           "method": "erode",
           "parameters": {
             "kernel": [5,5]
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 9,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "inversion",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [9,9],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [5,5]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [5,5]
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 125,
+            "hysteresis_max": 175
           }
         }
       ]
