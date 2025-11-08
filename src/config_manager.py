@@ -169,27 +169,6 @@ class ConfigManager:
         """
         return self.config.get(key, default)
 
-    def get_nested(self, keys: List[str], default: Any = None) -> Any:
-        """
-        Get nested configuration value.
-
-        Args:
-            keys: List of keys to traverse (e.g., ['output_paths', 'preprocessed'])
-            default: Default value if key path not found
-
-        Returns:
-            Configuration value
-        """
-        value = self.config
-        for key in keys:
-            if isinstance(value, dict):
-                value = value.get(key)
-                if value is None:
-                    return default
-            else:
-                return default
-        return value
-
     def get_preprocessing_chains(self) -> List[Dict[str, Any]]:
         """Get all preprocessing chains."""
         return self.config.get('preprocessing_chains', [])
@@ -209,19 +188,6 @@ class ConfigManager:
             Engine-specific configuration dictionary
         """
         return self.ocr_engines_config.get('engines', {}).get(engine_name, {})
-
-    def get_ocr_config(self) -> Dict[str, Any]:
-        """
-        Get OCR configuration for output/metadata purposes.
-        Returns a dict with primary_engine and available engines from ocr_engines_config.
-
-        Returns:
-            Dictionary with ocr configuration
-        """
-        return {
-            'primary_engine': self.get_primary_engine(),
-            'engines': list(self.ocr_engines_config.get('engines', {}).keys())
-        }
 
     def get_retry_attempts(self) -> int:
         """Get maximum number of retry attempts."""
@@ -256,10 +222,6 @@ class ConfigManager:
     def get_character_names_csv(self) -> str:
         """Get character names CSV path from OCR engines config."""
         return self.ocr_engines_config.get('character_names_csv', 'data/character_info.csv')
-
-    def get_table_bounds(self) -> Dict[str, Any]:
-        """Get table bounds configuration from grid config."""
-        return self.grid_config
 
     def get_num_rows(self) -> int:
         """Get number of rows in the table grid."""
