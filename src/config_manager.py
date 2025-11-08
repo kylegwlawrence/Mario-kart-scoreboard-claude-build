@@ -57,7 +57,8 @@ class ConfigManager:
             'output_paths',
             'preprocessing_chains',
             'primary_engine',
-            'retry_attempts'
+            'retry_attempts',
+            'fuzzy_threshold'
         ]
 
         missing_fields = [f for f in required_fields if f not in config]
@@ -155,19 +156,6 @@ class ConfigManager:
             self.logger.info(f"Successfully loaded OCR engines config from {config_path}")
 
         return ocr_engines_config
-
-    def get(self, key: str, default: Any = None) -> Any:
-        """
-        Get configuration value by key.
-
-        Args:
-            key: Configuration key
-            default: Default value if key not found
-
-        Returns:
-            Configuration value
-        """
-        return self.config.get(key, default)
 
     def get_preprocessing_chains(self) -> List[Dict[str, Any]]:
         """Get all preprocessing chains."""
