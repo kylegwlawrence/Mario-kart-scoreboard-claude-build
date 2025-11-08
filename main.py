@@ -143,7 +143,7 @@ def process_image_directory(processor: OCRProcessor, image_dir: str) -> None:
             
             # process the image with the specified ocr processor and save to output
             results = processor.process_image(str(image_path))
-            processor.logger.info(f"Success: {results['valid_predictions']}/{results['total_cells']} cells valid")
+            processor.logger.info(f"Success: {results['valid_predictions']}/{results['extracted_cells']} cells valid")
 
         except Exception as e:
             processor.logger.error(f"Processing failed for {image_path.name}: {e}")
