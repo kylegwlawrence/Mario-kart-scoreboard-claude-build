@@ -53,8 +53,9 @@ class CellValidator:
             # Try to parse as integer
             place = int(value.strip())
 
+            # Validate place is within valid range
             if not (self.PLACE_MIN <= place <= self.PLACE_MAX):
-                return False, None, f"Place {place} not in range 1-12"
+                return False, None, f"Place {place} not in range {self.PLACE_MIN}-{self.PLACE_MAX}"
 
             # Check ordering constraint if previous_place is provided
             if previous_place is not None and place < previous_place:
@@ -84,8 +85,9 @@ class CellValidator:
             # Try to parse as integer
             score = int(value.strip())
 
+            # Validate score is within valid rang
             if not (self.SCORE_MIN <= score <= self.SCORE_MAX):
-                return False, None, f"Score {score} not in range 1-999"
+                return False, None, f"Score {score} not in range {self.SCORE_MIN}-{self.SCORE_MAX}"
 
             # Check ordering constraint if previous_score is provided
             if previous_score is not None and score > previous_score:
@@ -114,11 +116,9 @@ class CellValidator:
         if not value:
             return False, None, "Player name is empty"
 
-        value = value.strip()
-
-        # Normalize function: lowercase and remove spaces
+        # Normalize function to reuse
         def normalize(s: str) -> str:
-            return s.lower().replace(" ", "")
+            return value.lower().replace(" ", "")
 
         normalized_value = normalize(value)
 

@@ -91,7 +91,7 @@ class PreprocessingPipeline:
 
     # Preprocessing methods
     @staticmethod
-    def apply_grayscale(image: np.ndarray, parameters: Dict[str, Any]) -> np.ndarray:
+    def apply_grayscale(image: np.ndarray) -> np.ndarray:
         """Convert image to grayscale."""
         if len(image.shape) == 3:
             return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -159,7 +159,7 @@ class PreprocessingPipeline:
         )
 
     @staticmethod
-    def apply_inversion(image: np.ndarray, parameters: Dict[str, Any]) -> np.ndarray:
+    def apply_inversion(image: np.ndarray) -> np.ndarray:
         """Invert image colors."""
         return cv2.bitwise_not(image)
 
@@ -217,6 +217,7 @@ class PreprocessingPipeline:
         """Downscale image using PIL's high-quality LANCZOS resampling.
 
         Supports either explicit dimensions or scale_factor for proportional scaling.
+        Works with both grayscale and color images.
         """
         width = parameters.get('width')
         height = parameters.get('height')
@@ -232,11 +233,11 @@ class PreprocessingPipeline:
         elif width is None or height is None:
             raise ValueError("Downscale requires either 'scale_factor' or both 'width' and 'height' parameters")
 
-        # Convert numpy array (BGR) to PIL Image (RGB)
-        pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        # Convert numpy array directly to PIL Image (PIL handles both grayscale and color)
+        pil_image = Image.fromarray(image)
 
         # Resize using LANCZOS filter
         resized_image = pil_image.resize((width, height), Image.LANCZOS)
 
-        # Convert back to numpy array (BGR)
-        return cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
+        # Convert back to numpy array
+        return np.array(resized_image)
