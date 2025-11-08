@@ -5,8 +5,9 @@ A Python-based optical character recognition (OCR) pipeline designed to extract 
 ## Features
 
 - **Multi-Engine OCR Support**: Choose between paddleocr, tesseract, or easyocr
-- **Configurable Preprocessing**: 13 different image preprocessing methods with chainable pipelines
-- **Automatic Table Detection**: Uses contour detection to locate the scoreboard
+  - easyocr is, unbelievably, the easiest and best OCR engine for this task so far. Therefor I only implement easyocr in my project right now
+- **Configurable Preprocessing**: 14 different image preprocessing methods with chainable pipelines
+- **Grid-Based Cell Extraction**: Extracts cells using configurable grid bounds for accurate alignment
 - **Intelligent Validation**:
   - Exact matching for place (1-12)
   - Fuzzy matching for player names
@@ -35,14 +36,14 @@ cd mario_kart_scores_claude_build
 pip install -r requirements.txt
 
 # Or install specific OCR engines as needed
-pip install paddlepaddle paddleocr  # For paddleocr (recommended)
+pip install easyocr                  # For easyocr (recommended)
+pip install paddlepaddle paddleocr  # For paddleocr
 pip install pytesseract tesseract    # For tesseract
-pip install easyocr                  # For easyocr
 ```
 
 3. **Verify installation**:
 ```bash
-python3 -c "from src.ocr_processor import OCRProcessor; print('Installation successful')"
+python3 -c "from src.orchestrator import OCRProcessor; print('Installation successful')"
 ```
 
 ## Usage
@@ -77,10 +78,10 @@ python main.py --help
 ### Programmatic Usage
 
 ```python
-from src.ocr_processor import OCRProcessor
+from src.orchestrator import OCRProcessor
 
 # Initialize processor
-processor = OCRProcessor('src/configs/default_config.json', debug=False)
+processor = OCRProcessor('src/configs/pipelines/default.json', debug=False)
 
 # Process a single image
 results = processor.process_image('pngs/IMG_7995.png')
@@ -90,12 +91,14 @@ print(f"Valid predictions: {results['valid_predictions']}/{results['total_cells'
 print(f"Failed cells: {results['failed_cells']}")
 ```
 
-See `example_usage.py` for more detailed examples.
-
 ## Configuration
 
 ### Default Configuration
-The default configuration is located in `src/configs/default_config.json`. Create new JSON files in the `src/configs/` directory to define custom configurations.
+The default configuration is located in `src/configs/pipelines/default.json`. Additional configuration files include:
+- `src/configs/grid.json`: Defines row and column cell bounds for the scoreboard
+- `src/configs/ocr_engines.json`: Defines available OCR engines and character names CSV path
+
+Create new JSON files in the `src/configs/pipelines/` directory to define custom pipeline configurations.
 
 ### Configuration Structure
 
@@ -103,9 +106,9 @@ The default configuration is located in `src/configs/default_config.json`. Creat
 {
   "image_source": "./pngs",
   "output_paths": {
-    "preprocessed": "output/preprocessed_images",
     "annotated": "output/annotated_images",
     "predictions": "output/predictions",
+    "cell_images": "output/cell_images",
     "logs": ".logging"
   },
   "preprocessing_chains": [
@@ -117,16 +120,9 @@ The default configuration is located in `src/configs/default_config.json`. Creat
       ]
     }
   ],
-  "ocr_config": {
-    "engines": ["paddleocr", "tesseract", "easyocr"],
-    "primary_engine": "paddleocr"
-  },
-  "retry_config": {
-    "max_attempts": 3,
-    "retry_on_low_confidence": true,
-    "retry_strategies": ["preprocessing", "ocr_engine"]
-  },
-  "character_names_csv": "character_info.csv"
+  "primary_engine": "paddleocr",
+  "retry_attempts": 3,
+  "fuzzy_threshold": 0.8
 }
 ```
 
@@ -233,57 +229,56 @@ The default configuration is located in `src/configs/default_config.json`. Creat
 ### Directory Structure
 ```
 output/
-├── preprocessed_images/           # Preprocessed images (PNG)
 ├── annotated_images/              # Annotated original images (JPG)
-└── predictions/                   # CSV and JSON results
-    ├── {image}_predictions.csv
-    └── {image}_metadata.json
+├── predictions/                   # CSV results
+│   └── {image}_predictions.csv
+├── cell_images/                   # Extracted cell images for debugging
+└── logs/                          # Processing logs
 .logging/                           # Debug logs
 ```
 
 ### CSV Output (`{image}_predictions.csv`)
 
 Columns:
+- **unique_key**: Unique identifier for the cell
 - **row_id**: Row in table (0-11)
-- **column_id**: Column in table (0-2, where 0=place, 1=name, 2=score)
+- **column_id**: Column in table (1, 2, or 4, where 1=place, 2=name, 4=score)
 - **predicted_text**: Extracted and validated text
 - **confidence**: OCR confidence score (0-1)
+- **passes_validation**: Whether the cell passed validation constraints
 - **text_coordinates**: Pixel coordinates in original image
 - **original_filepath**: Path to original image
-- **preprocessed_filepath**: Path to preprocessed image
-- **process_start_timestamp**: Processing start time (ISO 8601)
-- **preprocessing_methods**: Preprocessing steps applied
-
-### JSON Output (`{image}_metadata.json`)
-
-Contains:
-- Image paths and processing timestamps
-- Configuration used (preprocessing, OCR, retry settings)
-- Summary of results (valid/failed cells)
-- Details of failed cells with error messages
+- **process_start_time**: Processing start time (ISO 8601)
+- **process_end_time**: Processing completion time (ISO 8601)
+- **primary_engine**: Primary OCR engine used
+- **retry_attempt_used**: Which retry attempt succeeded (0 for first attempt)
+- **pipeline_steps**: Preprocessing steps applied
+- **pipeline_config_path**: Path to the configuration file used
+- **failed_reason**: Reason for failure (if validation failed)
+- **cell_image_paths**: Paths to extracted cell images
 
 ## Validation Rules
 
-### Place (Column 0)
+### Place (Column 1)
 - Must be an integer in range 1-12
 - Invalid values trigger retry
 
-### Player Name (Column 1)
+### Player Name (Column 2)
 - Exact match: Returns the name as-is
-- Fuzzy match: Uses fuzzy matching (threshold 0.8) if exact match fails
-- Valid names from `character_info.csv`
+- Fuzzy match: Uses fuzzy matching (configurable threshold, default 0.8) if exact match fails
+- Valid names from the configured character CSV file
 
-### Score (Column 2)
+### Score (Column 4)
 - Must be an integer in range 1-999
 - Invalid values trigger retry
 
 ## Error Handling
 
-- **Graceful degradation**: If table detection fails, uses full image bounds
 - **Per-cell retry**: Failed cells trigger retry with different preprocessing/OCR engine
-- **Configurable retry**: Customize max attempts and retry strategies
-- **Stop on first error**: Batch processing stops on first critical error
-- **Comprehensive logging**: All errors logged with full context
+- **Configurable retry**: Customize max attempts via `retry_attempts` config parameter
+- **Stop on critical error**: Batch processing stops on first critical/uncaught error
+- **Graceful cell failure**: Individual cell validation failures are retried, not fatal
+- **Comprehensive logging**: All errors and retries logged with full context
 
 ## Logging
 
@@ -309,10 +304,10 @@ Logs saved to `.logging/` directory with timestamps.
 
 1. **config_manager.py**: Configuration loading and validation
 2. **preprocessing.py**: Image preprocessing pipeline
-3. **ocr_engine.py**: Multi-engine OCR wrapper
+3. **ocr_engines.py**: Multi-engine OCR wrapper
 4. **annotator.py**: Image annotation with grid lines and predictions
-5. **validation.py**: Cell validation with constraints
-6. **ocr_processor.py**: Main orchestration module
+5. **constraint_validator.py**: Cell validation with constraints
+6. **orchestrator.py**: Main orchestration module
 
 ### Processing Pipeline
 
@@ -321,19 +316,15 @@ Input Image
     ↓
 [Preprocessing] → Grayscale, filters, thresholds, etc.
     ↓
-[Saved] → output/preprocessed_images/
+[Cell Extraction] → Extract cells using configured grid bounds
     ↓
-[Table Detection] → Find table bounds via contours
-    ↓
-[Cell Extraction] → Extract 12×3 cells from table
-    ↓
-[OCR + Validation] → Extract text and validate
+[OCR + Validation] → Extract text and validate against constraints
     ├→ Valid? → Store in predictions
-    └→ Invalid? → Retry (if attempts remaining)
+    └→ Invalid? → Retry with different preprocessing chain (if attempts remaining)
     ↓
-[Annotation] → Draw gridlines, text, confidence
+[Annotation] → Draw gridlines, OCR results, and confidence scores
     ↓
-[Save Results] → CSV, JSON, annotated image
+[Save Results] → CSV predictions, annotated image, cell images
 ```
 
 ## Performance Considerations
@@ -350,10 +341,10 @@ Input Image
 pip install paddlepaddle paddleocr
 ```
 
-### Table not detected correctly
+### Results not as expected
 - Check if image is clear and well-lit
 - Try different preprocessing chain in config
-- Disable table detection: `"enabled": false` (will use full image)
+- Verify grid bounds in `src/configs/grid.json` match your scoreboard layout
 
 ### OCR results inaccurate
 - Adjust confidence threshold (lower = more lenient)
@@ -366,19 +357,14 @@ pip install paddlepaddle paddleocr
 
 ## Development
 
-### Running Tests
-```bash
-pytest tests/
-```
-
 ### Code Formatting
 ```bash
-black src/ main.py example_usage.py
+black src/ main.py
 ```
 
 ### Type Checking
 ```bash
-mypy src/ main.py example_usage.py
+mypy src/ main.py
 ```
 
 ## Future Enhancements

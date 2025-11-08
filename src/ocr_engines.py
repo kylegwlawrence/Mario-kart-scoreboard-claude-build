@@ -22,7 +22,7 @@ class OCREngine:
     def __init__(
         self,
         config_manager: 'ConfigManager',
-        primary_engine: str = 'paddleocr',
+        primary_engine: str = 'easyocr',
         logger: Optional[logging.Logger] = None
     ):
         """
