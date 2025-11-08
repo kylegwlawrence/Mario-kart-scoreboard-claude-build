@@ -45,6 +45,7 @@ class TableDetector:
         self,
         image: np.ndarray,
         predictions: Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict, List[str]]],
+        table_bounds: Tuple[int, int, int, int],
         predicted_text_size: float = 3,
         predicted_text_thickness: int = 8,
         conf_text_size: float = 1,
@@ -57,14 +58,12 @@ class TableDetector:
         Args:
             image: Original image to annotate
             predictions: Dictionary with (row, col) as key and (text, confidence, passes_validation, retry_attempt, chain_config, cell_image_paths) as value
-            table_bounds: (x, y, width, height) of table
-            rows: Number of rows in table
-            cols: Number of columns in table
+            table_bounds: Table bounds tuple (x, y, width, height)
             predicted_text_size: Font scale for predicted text (default: 3)
-            predicted_text_thickness: Font thickness for predicted text (default: 5)
-            conf_text_size: Font scale for confidence score text (default: 1.5)
-            conf_text_thickness: Font thickness for confidence score text (default: 2)
-            font_color: RGB color tuple for text (default: (0, 0, 255) - red)
+            predicted_text_thickness: Font thickness for predicted text (default: 8)
+            conf_text_size: Font scale for confidence score text (default: 1)
+            conf_text_thickness: Font thickness for confidence score text (default: 3)
+            font_color: RGB color tuple for text (default: (0, 0, 190) - red)
 
         Returns:
             Annotated image
