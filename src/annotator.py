@@ -10,42 +10,31 @@ from typing import List, Optional, Tuple, Dict
 from src.config_manager import ConfigManager
 
 
-class TableDetector:
-    """Detects and extracts Mario Kart scoreboard table."""
-
-    # Table constants
-    TABLE_ROWS = 12
-    TABLE_COLS = 3
+class ImageAnnotator:
+    """Annotates the scoreboard image with grid lines, predicted text, and confidence."""
 
     def __init__(
         self,
         config_manager: ConfigManager,
-        enabled: bool = True,
-        method: str = 'contour',
         logger: Optional[logging.Logger] = None
     ):
         """
-        Initialize table detector.
+        Initialize image annotator.
 
         Args:
             config_manager: Configuration manager instance
-            enabled: Whether table detection is enabled
-            method: Detection method ('contour' or 'manual')
             logger: Logger instance
         """
         self.config_manager = config_manager
-        self.enabled = enabled
-        self.method = method
         self.logger = logger
 
         if logger:
-            logger.info(f"Initialized TableDetector (enabled={enabled}, method={method})")
+            logger.info(f"Initialized ImageAnnotator")
 
     def annotate_image(
         self,
         image: np.ndarray,
         predictions: Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict, List[str]]],
-        table_bounds: Tuple[int, int, int, int],
         predicted_text_size: float = 3,
         predicted_text_thickness: int = 8,
         conf_text_size: float = 1,
@@ -58,7 +47,6 @@ class TableDetector:
         Args:
             image: Original image to annotate
             predictions: Dictionary with (row, col) as key and (text, confidence, passes_validation, retry_attempt, chain_config, cell_image_paths) as value
-            table_bounds: Table bounds tuple (x, y, width, height)
             predicted_text_size: Font scale for predicted text (default: 3)
             predicted_text_thickness: Font thickness for predicted text (default: 8)
             conf_text_size: Font scale for confidence score text (default: 1)
@@ -74,11 +62,6 @@ class TableDetector:
         if image is None or image.size == 0:
             raise ValueError("Invalid image for annotation")
 
-        # Convert grayscale to BGR if needed
-        if len(image.shape) == 2:
-            annotated = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        else:
-            annotated = image.copy()
 
         # Lighten the image by blending with white for better text visibility
         white_overlay = np.ones_like(annotated) * 255

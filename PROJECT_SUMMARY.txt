@@ -13,7 +13,7 @@ DELIVERABLES
    ✓ src/config_manager.py         - Configuration management
    ✓ src/preprocessing.py          - Image preprocessing (13 methods)
    ✓ src/ocr_engine.py             - Multi-engine OCR wrapper
-   ✓ src/table_detection.py        - Table detection & annotation
+   ✓ src/annotator.py              - Image annotation & visualization
    ✓ src/validation.py             - Cell validation logic
    ✓ src/ocr_processor.py          - Main orchestration
 

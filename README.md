@@ -310,7 +310,7 @@ Logs saved to `.logging/` directory with timestamps.
 1. **config_manager.py**: Configuration loading and validation
 2. **preprocessing.py**: Image preprocessing pipeline
 3. **ocr_engine.py**: Multi-engine OCR wrapper
-4. **table_detection.py**: Table bounds detection and annotation
+4. **annotator.py**: Image annotation with grid lines and predictions
 5. **validation.py**: Cell validation with constraints
 6. **ocr_processor.py**: Main orchestration module
 

@@ -14,7 +14,7 @@ import uuid
 from src.config_manager import ConfigManager
 from src.preprocessor import PreprocessingPipeline
 from src.ocr_engines import OCREngine
-from src.table_detector import TableDetector
+from src.annotator import ImageAnnotator
 from src.constraint_validator import CellValidator
 from src.utils import save_csv, load_valid_player_names, setup_logger
 
@@ -93,7 +93,7 @@ class OCRProcessor:
             logger=self.logger
         )
 
-        self.table_detector = TableDetector(config_manager=self.config_manager, logger=self.logger)
+        self.image_annotator = ImageAnnotator(config_manager=self.config_manager, logger=self.logger)
 
         self.validator = CellValidator(self.valid_player_names, self.logger)
         self.fuzzy_threshold = self.config_manager.get_fuzzy_threshold()
@@ -178,10 +178,9 @@ class OCRProcessor:
 
         # Create annotated image
         try:
-            annotated_image = self.table_detector.annotate_image(
+            annotated_image = self.image_annotator.annotate_image(
                 image,
-                predictions,
-                table_bounds
+                predictions
             )
             annotated_path = Path(self.output_paths['annotated']) / f"{output_filename_prefix}_{run_id}_annotated.jpg"
             cv2.imwrite(str(annotated_path), annotated_image, [cv2.IMWRITE_JPEG_QUALITY, 90])
