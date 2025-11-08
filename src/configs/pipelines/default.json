@@ -1,13 +1,12 @@
 {
   "image_source": "./pngs",
   "output_paths": {
-    "preprocessed": "output/preprocessed_images",
     "annotated": "output/annotated_images",
     "predictions": "output/predictions",
     "cell_images": "output/cell_images",
     "logs": ".logging"
   },
-  "primary_engine": "tesseract",
+  "primary_engine": "easyocr",
   "retry_attempts": 3,
   "fuzzy_threshold": 0.8,
   "preprocessing_chains": [
@@ -46,12 +45,8 @@
           "parameters": null
         },
         {
-          "method": "adaptive_threshold",
-          "parameters": {
-            "max_value": 255,
-            "block_size": 15,
-            "C": -2
-          }
+          "method": "inversion",
+          "parameters": null
         }
       ]
     },
@@ -63,6 +58,21 @@
           "parameters": null
         },
         {
+          "method": "inversion",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [
+              5,
+              5
+            ],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
           "method": "bilateral_filter",
           "parameters": {
             "d": 9,
@@ -71,12 +81,25 @@
           }
         },
         {
-          "method": "threshold",
+          "method": "edge_detection",
           "parameters": {
-            "threshold": 150,
-            "max_value": 255
+            "hysteresis_min": 125,
+            "hysteresis_max": 175
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [7,7]
           }
         }
+
       ]
     }
   ]

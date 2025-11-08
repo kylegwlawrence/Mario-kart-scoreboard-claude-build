@@ -90,31 +90,6 @@ class PreprocessingPipeline:
                 self.logger.error(f"Preprocessing failed: {e}")
             raise
 
-    def save_preprocessed_image(
-        self,
-        image: np.ndarray,
-        output_path: str
-    ) -> None:
-        """
-        Save preprocessed image as PNG.
-
-        Args:
-            image: Preprocessed image
-            output_path: Path to save PNG file
-
-        Raises:
-            IOError: If file writing fails
-        """
-        try:
-            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-            success = cv2.imwrite(output_path, image)
-            if not success:
-                raise IOError(f"cv2.imwrite returned False for {output_path}")
-            if self.logger:
-                self.logger.info(f"Saved preprocessed image to {output_path}")
-        except Exception as e:
-            raise IOError(f"Failed to save preprocessed image to {output_path}: {e}")
-
     # Preprocessing methods
     @staticmethod
     def apply_grayscale(image: np.ndarray, parameters: Dict[str, Any]) -> np.ndarray:

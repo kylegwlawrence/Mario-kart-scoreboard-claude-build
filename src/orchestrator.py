@@ -198,7 +198,6 @@ class OCRProcessor:
             predictions,
             failed_cells,
             image_path,
-            None,
             process_start_time,
             process_end_time,
             output_filename_prefix,
@@ -517,7 +516,6 @@ class OCRProcessor:
         predictions: Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict, List[str]]],
         failed_cells: List[Dict[str, Any]],
         image_path: str,
-        preprocessed_path: Optional[str],
         process_start_time: str,
         process_end_time: str,
         filename_prefix: str,
@@ -532,7 +530,6 @@ class OCRProcessor:
             predictions: Dictionary of predictions with validation status, retry attempt, and pipeline config
             failed_cells: List of failed cells with failed_reason
             image_path: Original image path
-            preprocessed_path: Preprocessed image path (None if not saved)
             process_start_time: Timestamp when processing started
             process_end_time: Timestamp when processing ended
             filename_prefix: Prefix for output files
@@ -578,7 +575,6 @@ class OCRProcessor:
                 'passes_validation': str(passes_validation),
                 'text_coordinates': f"({cell_x}, {cell_y}, {cell_w}, {cell_h})",
                 'original_filepath': image_path,
-                'preprocessed_filepath': preprocessed_path if preprocessed_path else '',
                 'process_start_time': process_start_time,
                 'process_end_time': process_end_time,
                 'primary_engine': primary_engine,

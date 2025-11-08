@@ -306,7 +306,6 @@ class PipelineConfigGenerator:
         return {
             'image_source': image_source,
             'output_paths': {
-                'preprocessed': 'output/preprocessed_images',
                 'annotated': 'output/annotated_images',
                 'predictions': 'output/predictions',
                 'cell_images': 'output/cell_images',
