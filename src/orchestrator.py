@@ -564,7 +564,12 @@ class OCRProcessor:
             # Get failed reason if applicable
             failed_reason = failed_reasons.get((row, col), '')
 
+            # Generate unique key that includes retry attempt for tracking all processing attempts
+            attempt_num = retry_attempt_used if retry_attempt_used is not None else 0
+            unique_key = f"{filename_prefix}_{run_id}_r{row}_c{col}_atmpt{attempt_num}"
+
             csv_data.append({
+                'unique_key': unique_key,
                 'row_id': row,
                 'column_id': col,
                 'predicted_text': text,
@@ -576,7 +581,7 @@ class OCRProcessor:
                 'process_start_time': process_start_time,
                 'process_end_time': process_end_time,
                 'primary_engine': primary_engine,
-                'retry_attempt_used': retry_attempt_used if retry_attempt_used is not None else '',
+                'retry_attempt_used': attempt_num,
                 'pipeline_steps': json.dumps(pipeline_steps),
                 'pipeline_config_path': self.config_path,
                 'failed_reason': failed_reason,
@@ -587,7 +592,7 @@ class OCRProcessor:
         csv_path = Path(self.output_paths['predictions']) / f"{filename_prefix}_{run_id}_predictions.csv"
         try:
             fieldnames = [
-                'row_id', 'column_id', 'predicted_text', 'confidence', 'passes_validation',
+                'unique_key', 'row_id', 'column_id', 'predicted_text', 'confidence', 'passes_validation',
                 'text_coordinates', 'original_filepath', 'preprocessed_filepath',
                 'process_start_time', 'process_end_time', 'primary_engine', 'retry_attempt_used',
                 'pipeline_steps', 'pipeline_config_path', 'failed_reason', 'cell_image_paths'
