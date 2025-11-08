@@ -166,7 +166,43 @@ class PipelineConfigGenerator:
         chains = []
         available_methods = self._filter_methods()
 
-        # Always start with base chain
+        # Rule 1: Generate basic chains with only grayscale and inversion (both orders)
+        chains.append([
+            self._create_method_config('grayscale', None),
+            self._create_method_config('inversion', None),
+        ])
+        if max_chains and len(chains) >= max_chains:
+            return chains
+
+        chains.append([
+            self._create_method_config('inversion', None),
+            self._create_method_config('grayscale', None),
+        ])
+        if max_chains and len(chains) >= max_chains:
+            return chains
+
+        # Rule 2: Both basic combinations with edge detection only
+        edge_params_list = self.method_params.get('edge_detection', [])
+        for edge_params in edge_params_list:
+            chain = [
+                self._create_method_config('grayscale', None),
+                self._create_method_config('inversion', None),
+                self._create_method_config('edge_detection', edge_params),
+            ]
+            chains.append(chain)
+            if max_chains and len(chains) >= max_chains:
+                return chains
+
+            chain = [
+                self._create_method_config('inversion', None),
+                self._create_method_config('grayscale', None),
+                self._create_method_config('edge_detection', edge_params),
+            ]
+            chains.append(chain)
+            if max_chains and len(chains) >= max_chains:
+                return chains
+
+        # Rule 3: Generate all other combinations starting with standard base chain
         base_chain = self._generate_base_chain()
 
         # Generate single-method additions (after base)
