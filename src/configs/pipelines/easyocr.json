@@ -319,6 +319,180 @@
           }
         }
       ]
+    },
+    {
+      "retry_attempt": 9,
+      "methods": [
+        
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "inversion",
+          "parameters": null
+        }
+      ]
+    },
+    {
+      "retry_attempt": 10,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "inversion",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 100,
+            "hysteresis_max": 150
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [9,9]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [9,9]
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 11,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "inversion",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 125,
+            "hysteresis_max": 175
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [9,9]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [9,9]
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 12,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "inversion",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [7,7],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 125,
+            "hysteresis_max": 175
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        }
+      ]
+    },
+    {
+      "retry_attempt": 13,
+      "methods": [
+        {
+          "method": "grayscale",
+          "parameters": null
+        },
+        {
+          "method": "inversion",
+          "parameters": null
+        },
+        {
+          "method": "gaussian_blur",
+          "parameters": {
+            "kernel": [5,5],
+            "sigmaX": 0,
+            "sigmaY": 0
+          }
+        },
+        {
+          "method": "edge_detection",
+          "parameters": {
+            "hysteresis_min": 125,
+            "hysteresis_max": 175
+          }
+        },
+        {
+          "method": "dilate",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        },
+        {
+          "method": "erode",
+          "parameters": {
+            "kernel": [7,7]
+          }
+        }
+      ]
     }
   ]
 }
