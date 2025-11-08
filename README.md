@@ -156,35 +156,35 @@ Create new JSON files in the `src/configs/pipelines/` directory to define custom
 - Example: `{"method": "grayscale"}`
 
 **2. gaussian_blur**
-- `kernel` (tuple): Kernel size, default: (5, 5)
-- `sigmaX` (float): Sigma X, default: 0
-- `sigmaY` (float): Sigma Y, default: 0
+- `kernel` (tuple): Size of Gaussian kernel matrix for convolution; larger values produce more blur (must be positive odd numbers)
+- `sigmaX` (float): Standard deviation in X direction; when 0, auto-calculated from kernel size; larger values increase horizontal blur spread
+- `sigmaY` (float): Standard deviation in Y direction; when 0, equals sigmaX; controls vertical blur spread independently
 - Example: `{"method": "gaussian_blur", "parameters": {"kernel": [5, 5], "sigmaX": 0, "sigmaY": 0}}`
 
 **3. edge_detection**
-- `hysteresis_min` (int): Lower threshold, default: 100
-- `hysteresis_max` (int): Upper threshold, default: 200
+- `hysteresis_min` (int): Lower threshold for Canny edge detector; pixels with gradient values below this are discarded as non-edges
+- `hysteresis_max` (int): Upper threshold for Canny edge detector; pixels above this are strong edges; narrower gap between min/max produces more edge pixels
 - Example: `{"method": "edge_detection", "parameters": {"hysteresis_min": 100, "hysteresis_max": 200}}`
 
 **4. dilate**
-- `kernel` (tuple): Kernel size, default: (3, 3)
-- `iterations` (int): Number of iterations, default: 1
+- `kernel` (tuple): Size of rectangular structuring element; larger kernels expand bright regions more aggressively, thickening features
+- `iterations` (int): Number of times dilation is applied; more iterations progressively expand bright regions, closing gaps and connecting nearby features
 - Example: `{"method": "dilate", "parameters": {"kernel": [3, 3], "iterations": 1}}`
 
 **5. erode**
-- `kernel` (tuple): Kernel size, default: (3, 3)
-- `iterations` (int): Number of iterations, default: 1
+- `kernel` (tuple): Size of rectangular structuring element; larger kernels shrink bright regions more aggressively, thinning features
+- `iterations` (int): Number of times erosion is applied; more iterations progressively shrink bright regions, removing noise and separating connected features
 - Example: `{"method": "erode", "parameters": {"kernel": [3, 3], "iterations": 1}}`
 
 **6. threshold**
-- `threshold` (int): Threshold value, default: 127
-- `max_value` (int): Maximum value for above-threshold pixels, default: 255
+- `threshold` (int): Pixel intensity cutoff point (0-255); pixels above become max_value, pixels at or below become 0
+- `max_value` (int): Value assigned to pixels exceeding threshold; becomes the "white" level in binary output
 - Example: `{"method": "threshold", "parameters": {"threshold": 127, "max_value": 255}}`
 
 **7. adaptive_threshold**
-- `max_value` (int): Maximum value, default: 255
-- `block_size` (int): Size of pixel neighborhood (auto-adjusted to odd), default: 11
-- `C` (float): Constant subtracted from mean, default: 2
+- `max_value` (int): Value assigned to pixels passing the adaptive threshold test; becomes the "white" level in binary output
+- `block_size` (int): Size of pixel neighborhood for local threshold calculation (must be odd); larger values smooth threshold variations across the image
+- `C` (float): Constant subtracted from weighted mean during thresholding; positive values make thresholding more aggressive (more black), negative more permissive
 - Example: `{"method": "adaptive_threshold", "parameters": {"max_value": 255, "block_size": 11, "C": 2}}`
 
 **8. inversion**
@@ -192,36 +192,36 @@ Create new JSON files in the `src/configs/pipelines/` directory to define custom
 - Example: `{"method": "inversion"}`
 
 **9. morphology**
-- `operation` (string): Type of operation - 'open', 'close', 'gradient', 'tophat', or 'blackhat', default: 'open'
-- `kernel` (tuple): Kernel size, default: (5, 5)
+- `operation` (string): Morphological operation type: 'open' (remove noise), 'close' (fill gaps), 'gradient' (detect edges), 'tophat' (extract bright features), 'blackhat' (extract dark features)
+- `kernel` (tuple): Size of rectangular structuring element; larger kernels affect larger-scale structures in the image
 - Example: `{"method": "morphology", "parameters": {"operation": "open", "kernel": [5, 5]}}`
 
 **10. blur**
-- `kernel` (tuple): Kernel size, default: (5, 5)
+- `kernel` (tuple): Size of averaging kernel; each output pixel is the average of all pixels in this neighborhood; larger values produce stronger blur
 - Example: `{"method": "blur", "parameters": {"kernel": [5, 5]}}`
 
 **11. contrast**
-- `alpha` (float): Contrast scaling factor, default: 1.0 (1.0 = no change)
-- `beta` (int): Brightness offset, default: 0
+- `alpha` (float): Contrast multiplier applied to pixel values; values > 1 increase contrast, < 1 decrease contrast (formula: output = alpha × input + beta)
+- `beta` (int): Brightness offset added to all pixels; positive values brighten, negative darken; applied after alpha scaling
 - Example: `{"method": "contrast", "parameters": {"alpha": 1.5, "beta": 10}}`
 
 **12. median_blur**
-- `ksize` (int): Kernel size (auto-adjusted to odd if even), default: 5
+- `ksize` (int): Aperture size for median filter (must be odd); each pixel becomes the median of its ksize × ksize neighborhood, removing salt-and-pepper noise while preserving edges
 - Example: `{"method": "median_blur", "parameters": {"ksize": 5}}`
 
 **13. bilateral_filter**
-- `d` (int): Diameter of each pixel neighborhood, default: 9
-- `sigmaColor` (float): Filter sigma in color space, default: 75
-- `sigmaSpace` (float): Filter sigma in coordinate space, default: 75
+- `d` (int): Diameter of pixel neighborhood used during filtering; larger values consider more distant pixels but increase computation time
+- `sigmaColor` (float): Standard deviation in color space; larger values mix pixels with larger intensity differences, reducing edge-preservation
+- `sigmaSpace` (float): Standard deviation in coordinate space; larger values allow farther pixels to influence each other, increasing spatial smoothing
 - Example: `{"method": "bilateral_filter", "parameters": {"d": 9, "sigmaColor": 75, "sigmaSpace": 75}}`
 
 **14. downscale**
 - **Option A - Scale factor (proportional):**
-  - `scale_factor` (float): Scale multiplier, e.g., 0.5 for 50%
+  - `scale_factor` (float): Proportional scaling factor; values < 1 shrink the image, > 1 enlarge it (e.g., 0.5 halves dimensions)
   - Example: `{"method": "downscale", "parameters": {"scale_factor": 0.5}}`
 - **Option B - Explicit dimensions:**
-  - `width` (int): Target width in pixels
-  - `height` (int): Target height in pixels
+  - `width` (int): Target image width in pixels; required if scale_factor not provided; must be specified with height
+  - `height` (int): Target image height in pixels; required if scale_factor not provided; must be specified with width
   - Example: `{"method": "downscale", "parameters": {"width": 1920, "height": 1080}}`
 
 ## Output
