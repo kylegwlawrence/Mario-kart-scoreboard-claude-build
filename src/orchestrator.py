@@ -149,14 +149,6 @@ class OCRProcessor:
             self.logger.error(f"Preprocessing failed: {e}")
             raise
 
-        # Save preprocessed image
-        preprocessed_path = Path(self.output_paths['preprocessed']) / f"{output_filename_prefix}_{run_id}_preprocessed.png"
-        try:
-            self.preprocessing.save_preprocessed_image(preprocessed_image, str(preprocessed_path))
-        except IOError as e:
-            self.logger.error(f"Failed to save preprocessed image: {e}")
-            raise
-
         # Extract cells using predefined grid bounds
         try:
             cells = self.extract_cells_from_grid(preprocessed_image, columns_to_process=[1, 2, 4])
@@ -205,7 +197,7 @@ class OCRProcessor:
             predictions,
             failed_cells,
             image_path,
-            str(preprocessed_path),
+            None,
             process_start_time,
             process_end_time,
             output_filename_prefix,
@@ -391,7 +383,7 @@ class OCRProcessor:
         cell_images_dir: str = ""
     ) -> Tuple[Optional[str], float, bool, Optional[int], Optional[Dict], List[str]]:
         """
-        Process a single cell with retry logic using attempt-specific preprocessing chains.
+        Process a single cell with all preprocessing chains and select highest confidence result.
 
         Args:
             cell_image: Cell image
@@ -406,10 +398,8 @@ class OCRProcessor:
         Returns:
             Tuple of (text, confidence, passes_validation, retry_attempt_used, chain_config, cell_image_paths)
         """
-        last_extracted_text = None
-        last_confidence = 0.0
-        last_chain = None
-        last_attempt = None
+        # Store all OCR attempts with their metadata for later selection
+        all_attempts = []
         cell_image_paths = []
 
         # Get previous row's place for ordering validation (only for place column)
@@ -477,42 +467,48 @@ class OCRProcessor:
                 if not ocr_results:
                     if self.logger:
                         self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1}: No OCR results")
-                    last_chain = chain
-                    last_attempt = attempt
                     continue
 
-                # Take best result
+                # Take best result from this attempt
                 text, confidence, coords = ocr_results[0]
-                last_extracted_text = text
-                last_confidence = confidence
-                last_chain = chain
-                last_attempt = attempt
 
                 # Validate (pass previous_place and previous_score for column ordering validation)
                 is_valid, validated_text, error_msg = self.validator.validate_cell(col, text, previous_place=previous_place, previous_score=previous_score)
 
-                if is_valid:
-                    if self.logger:
-                        self.logger.debug(f"Cell ({row}, {col}): Valid -> {validated_text} (conf: {confidence:.2f})")
-                    return validated_text, confidence, True, attempt, chain, cell_image_paths
-                else:
-                    if self.logger:
-                        self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1}: {error_msg}")
-                    # Store the extracted text even if it failed validation
-                    if last_extracted_text is None:
-                        last_extracted_text = text
+                if self.logger:
+                    status = "valid" if is_valid else "invalid"
+                    self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1}: {status} -> {text} (conf: {confidence:.2f})")
+
+                # Store this attempt result
+                all_attempts.append({
+                    'text': text,
+                    'confidence': confidence,
+                    'is_valid': is_valid,
+                    'validated_text': validated_text,
+                    'attempt': attempt,
+                    'chain': chain
+                })
 
             except Exception as e:
                 if self.logger:
                     self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1} error: {e}")
 
-        if self.logger and last_extracted_text is not None:
-            self.logger.warning(f"Cell ({row}, {col}): Failed validation after {retry_attempts} attempts, last extracted text: {last_extracted_text}, confidence: {last_confidence}")
+        # Select best result based on highest confidence
+        if all_attempts:
+            best_attempt = max(all_attempts, key=lambda x: x['confidence'])
+            if self.logger:
+                self.logger.debug(f"Cell ({row}, {col}): Selected attempt with highest confidence: {best_attempt['text']} (conf: {best_attempt['confidence']:.2f}), valid: {best_attempt['is_valid']}")
+            return (
+                best_attempt['text'],
+                best_attempt['confidence'],
+                best_attempt['is_valid'],
+                best_attempt['attempt'],
+                best_attempt['chain'],
+                cell_image_paths
+            )
 
-        # Return the last extracted text with validation status as False, including last attempted chain
-        if last_extracted_text is not None:
-            return last_extracted_text, last_confidence, False, last_attempt, last_chain, cell_image_paths
-
+        if self.logger:
+            self.logger.warning(f"Cell ({row}, {col}): No OCR results extracted from any attempt")
         return None, 0.0, False, None, None, cell_image_paths
 
     def _prepare_results(
@@ -520,7 +516,7 @@ class OCRProcessor:
         predictions: Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict, List[str]]],
         failed_cells: List[Dict[str, Any]],
         image_path: str,
-        preprocessed_path: str,
+        preprocessed_path: Optional[str],
         process_start_time: str,
         process_end_time: str,
         filename_prefix: str,
@@ -535,7 +531,7 @@ class OCRProcessor:
             predictions: Dictionary of predictions with validation status, retry attempt, and pipeline config
             failed_cells: List of failed cells with failed_reason
             image_path: Original image path
-            preprocessed_path: Preprocessed image path
+            preprocessed_path: Preprocessed image path (None if not saved)
             process_start_time: Timestamp when processing started
             process_end_time: Timestamp when processing ended
             filename_prefix: Prefix for output files
@@ -576,7 +572,7 @@ class OCRProcessor:
                 'passes_validation': str(passes_validation),
                 'text_coordinates': f"({cell_x}, {cell_y}, {cell_w}, {cell_h})",
                 'original_filepath': image_path,
-                'preprocessed_filepath': preprocessed_path,
+                'preprocessed_filepath': preprocessed_path if preprocessed_path else '',
                 'process_start_time': process_start_time,
                 'process_end_time': process_end_time,
                 'primary_engine': primary_engine,
