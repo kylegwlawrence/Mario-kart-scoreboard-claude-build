@@ -304,39 +304,12 @@ class ConfigManager:
 
         return (col_left, row_top, col_right, row_bottom)
 
-    @staticmethod
-    def create_default_config() -> Dict[str, Any]:
+    def get_fuzzy_threshold(self) -> float:
         """
-        Create a default configuration dictionary.
+        Get fuzzy matching threshold for player name validation.
 
         Returns:
-            Default configuration
+            Fuzzy threshold value (0.0-1.0), defaults to 0.8
         """
-        return {
-            "image_source": "./images",
-            "output_paths": {
-                "preprocessed": "output/preprocessed_images",
-                "annotated": "output/annotated_images",
-                "predictions": "output/predictions",
-                "logs": ".logging"
-            },
-            "primary_engine": "paddleocr",
-            "retry_attempts": 3,
-            "preprocessing_chains": [
-                {
-                    "retry_attempt": 0,
-                    "methods": [
-                        {"method": "grayscale", "parameters": None},
-                        {"method": "gaussian_blur", "parameters": {"kernel": (5, 5), "sigmaX": 0, "sigmaY": 0}}
-                    ]
-                },
-                {
-                    "retry_attempt": 1,
-                    "methods": [
-                        {"method": "grayscale", "parameters": None},
-                        {"method": "threshold", "parameters": {"threshold": 150, "max_value": 255}}
-                    ]
-                }
-            ],
-            "character_names_csv": "data/character_info.csv"
-        }
+        return self.config.get('fuzzy_threshold', 0.8)
+

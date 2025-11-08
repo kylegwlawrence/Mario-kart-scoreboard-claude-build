@@ -287,7 +287,8 @@ class PipelineConfigGenerator:
 
     def generate_config(self, max_chains: Optional[int] = None,
                        image_source: str = "./pngs",
-                       primary_engine: str = "easyocr") -> Dict[str, Any]:
+                       primary_engine: str = "easyocr",
+                       fuzzy_threshold: float = 0.8) -> Dict[str, Any]:
         """
         Generate complete pipeline configuration.
 
@@ -295,6 +296,7 @@ class PipelineConfigGenerator:
             max_chains: Maximum number of chains to generate
             image_source: Path to image source directory
             primary_engine: OCR engine to use
+            fuzzy_threshold: Minimum similarity score for player name fuzzy matching (0-1)
 
         Returns:
             Complete pipeline config dict
@@ -312,6 +314,7 @@ class PipelineConfigGenerator:
             },
             'primary_engine': primary_engine,
             'retry_attempts': len(chains),
+            'fuzzy_threshold': fuzzy_threshold,
             'preprocessing_chains': [
                 {
                     'retry_attempt': idx,
@@ -358,6 +361,12 @@ def main():
         default='easyocr',
         help='OCR engine (default: easyocr)'
     )
+    parser.add_argument(
+        '--fuzzy-threshold',
+        type=float,
+        default=0.8,
+        help='Fuzzy matching threshold for player names (0-1, default: 0.8)'
+    )
 
     args = parser.parse_args()
 
@@ -370,7 +379,8 @@ def main():
     config = generator.generate_config(
         max_chains=args.max_chains,
         image_source=args.image_source,
-        primary_engine=args.engine
+        primary_engine=args.engine,
+        fuzzy_threshold=args.fuzzy_threshold
     )
 
     # Write output

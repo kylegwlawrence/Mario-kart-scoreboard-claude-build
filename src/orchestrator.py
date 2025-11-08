@@ -97,6 +97,7 @@ class OCRProcessor:
         self.table_detector = TableDetector(config_manager=self.config_manager, logger=self.logger)
 
         self.validator = CellValidator(self.valid_player_names, self.logger)
+        self.fuzzy_threshold = self.config_manager.get_fuzzy_threshold()
 
         self.logger.info("OCR Processor initialized successfully")
 
@@ -473,7 +474,7 @@ class OCRProcessor:
                 text, confidence, coords = ocr_results[0]
 
                 # Validate (pass previous_place and previous_score for column ordering validation)
-                is_valid, validated_text, error_msg = self.validator.validate_cell(col, text, previous_place=previous_place, previous_score=previous_score)
+                is_valid, validated_text, error_msg = self.validator.validate_cell(col, text, fuzzy_threshold=self.fuzzy_threshold, previous_place=previous_place, previous_score=previous_score)
 
                 if self.logger:
                     status = "valid" if is_valid else "invalid"

@@ -9,6 +9,7 @@
   },
   "primary_engine": "easyocr",
   "retry_attempts": 20,
+  "fuzzy_threshold": 0.8,
   "preprocessing_chains": [
     {
       "retry_attempt": 0,
