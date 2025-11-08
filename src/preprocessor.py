@@ -6,7 +6,6 @@ Handles various image transformations before OCR.
 import logging
 import cv2
 import numpy as np
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from PIL import Image
 

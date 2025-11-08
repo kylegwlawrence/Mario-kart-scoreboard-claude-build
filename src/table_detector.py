@@ -6,7 +6,7 @@ Detects table bounds and creates annotated images.
 import logging
 import cv2
 import numpy as np
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Optional, Tuple, Dict
 from src.config_manager import ConfigManager
 
 

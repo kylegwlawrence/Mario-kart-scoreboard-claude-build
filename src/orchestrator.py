@@ -3,7 +3,6 @@ Main OCR processor orchestrating the full pipeline.
 Coordinates preprocessing, OCR, validation, and result storage.
 """
 
-import logging
 import json
 import cv2
 import numpy as np

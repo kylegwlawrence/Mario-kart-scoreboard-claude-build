@@ -117,18 +117,11 @@ class PipelineConfigGenerator:
         all_methods -= set(self.exclude_methods)
         return all_methods
 
-    def _create_method_config(self, method: str, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Create a method configuration dict."""
-        return {
-            'method': method,
-            'parameters': params
-        }
-
     def _generate_base_chain(self) -> List[Dict[str, Any]]:
         """Generate the mandatory base chain: grayscale -> inversion."""
         return [
-            self._create_method_config('grayscale', None),
-            self._create_method_config('inversion', None),
+            {'method': 'grayscale', 'parameters': None},
+            {'method': 'inversion', 'parameters': None},
         ]
 
     def _generate_morphology_pairs(self) -> List[Tuple[Dict, Dict]]:
@@ -137,8 +130,8 @@ class PipelineConfigGenerator:
         kernels = [3, 5, 7, 9]
 
         for k in kernels:
-            dilate_config = self._create_method_config('dilate', {'kernel': [k, k]})
-            erode_config = self._create_method_config('erode', {'kernel': [k, k]})
+            dilate_config = {'method': 'dilate', 'parameters': {'kernel': [k, k]}}
+            erode_config = {'method': 'erode', 'parameters': {'kernel': [k, k]}}
             pairs.append((dilate_config, erode_config))
             # Also allow erode then dilate
             pairs.append((erode_config, dilate_config))
@@ -168,15 +161,15 @@ class PipelineConfigGenerator:
 
         # Rule 1: Generate basic chains with only grayscale and inversion (both orders)
         chains.append([
-            self._create_method_config('grayscale', None),
-            self._create_method_config('inversion', None),
+            {'method': 'grayscale', 'parameters': None},
+            {'method': 'inversion', 'parameters': None},
         ])
         if max_chains and len(chains) >= max_chains:
             return chains
 
         chains.append([
-            self._create_method_config('inversion', None),
-            self._create_method_config('grayscale', None),
+            {'method': 'inversion', 'parameters': None},
+            {'method': 'grayscale', 'parameters': None},
         ])
         if max_chains and len(chains) >= max_chains:
             return chains
@@ -185,18 +178,18 @@ class PipelineConfigGenerator:
         edge_params_list = self.method_params.get('edge_detection', [])
         for edge_params in edge_params_list:
             chain = [
-                self._create_method_config('grayscale', None),
-                self._create_method_config('inversion', None),
-                self._create_method_config('edge_detection', edge_params),
+                {'method': 'grayscale', 'parameters': None},
+                {'method': 'inversion', 'parameters': None},
+                {'method': 'edge_detection', 'parameters': edge_params},
             ]
             chains.append(chain)
             if max_chains and len(chains) >= max_chains:
                 return chains
 
             chain = [
-                self._create_method_config('inversion', None),
-                self._create_method_config('grayscale', None),
-                self._create_method_config('edge_detection', edge_params),
+                {'method': 'inversion', 'parameters': None},
+                {'method': 'grayscale', 'parameters': None},
+                {'method': 'edge_detection', 'parameters': edge_params},
             ]
             chains.append(chain)
             if max_chains and len(chains) >= max_chains:
@@ -212,7 +205,7 @@ class PipelineConfigGenerator:
 
             for params in self.method_params[method]:
                 chain = base_chain.copy()
-                chain.append(self._create_method_config(method, params))
+                chain.append({'method': method, 'parameters': params})
                 chains.append(chain)
 
                 if max_chains and len(chains) >= max_chains:
@@ -229,8 +222,8 @@ class PipelineConfigGenerator:
                         continue  # Skip individual dilate/erode, use pairs instead
 
                     chain = base_chain.copy()
-                    chain.append(self._create_method_config(method1, params1))
-                    chain.append(self._create_method_config(method2, params2))
+                    chain.append({'method': method1, 'parameters': params1})
+                    chain.append({'method': method2, 'parameters': params2})
                     chains.append(chain)
 
                     if max_chains and len(chains) >= max_chains:
@@ -253,7 +246,7 @@ class PipelineConfigGenerator:
         for edge_params in edge_params_list:
             # Edge detection alone
             chain = base_chain.copy()
-            chain.append(self._create_method_config('edge_detection', edge_params))
+            chain.append({'method': 'edge_detection', 'parameters': edge_params})
             chains.append(chain)
 
             if max_chains and len(chains) >= max_chains:
@@ -266,8 +259,8 @@ class PipelineConfigGenerator:
 
                 for params in self.method_params[method]:
                     chain = base_chain.copy()
-                    chain.append(self._create_method_config(method, params))
-                    chain.append(self._create_method_config('edge_detection', edge_params))
+                    chain.append({'method': method, 'parameters': params})
+                    chain.append({'method': 'edge_detection', 'parameters': edge_params})
                     chains.append(chain)
 
                     if max_chains and len(chains) >= max_chains:
@@ -276,7 +269,7 @@ class PipelineConfigGenerator:
             # Edge detection + morphology pairs
             for pair in morphology_pairs:
                 chain = base_chain.copy()
-                chain.append(self._create_method_config('edge_detection', edge_params))
+                chain.append({'method': 'edge_detection', 'parameters': edge_params})
                 chain.extend(pair)
                 chains.append(chain)
 
