@@ -3,10 +3,8 @@
 Example usage of the Mario Kart Scoreboard OCR Pipeline.
 Demonstrates programmatic usage (non-CLI).
 """
-
 from pathlib import Path
 from src.orchestrator import OCRProcessor
-
 
 def example_single_image_processing():
     """Example: Process a single image programmatically."""
