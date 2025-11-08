@@ -152,7 +152,7 @@ class CellValidator:
         self,
         column: int,
         value: str,
-        fuzzy_threshold: float = 0.8,
+        fuzzy_threshold: float,
         previous_place: Optional[int] = None,
         previous_score: Optional[int] = None
     ) -> Tuple[bool, Optional[any], str]:
