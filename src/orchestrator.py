@@ -184,7 +184,7 @@ class OCRProcessor:
             )
             annotated_path = Path(self.output_paths['annotated']) / f"{output_filename_prefix}_{run_id}_annotated.jpg"
             cv2.imwrite(str(annotated_path), annotated_image, [cv2.IMWRITE_JPEG_QUALITY, 90])
-            self.logger.info(f"Saved annotated image: {annotated_path}")
+            self.logger.info(f"Written annotated image to: {annotated_path}")
         except Exception as e:
             self.logger.error(f"Failed to create/save annotated image: {e}")
             raise
@@ -455,6 +455,8 @@ class OCRProcessor:
                         cell_image_path = Path(cell_images_dir) / cell_image_filename
                         cv2.imwrite(str(cell_image_path), preprocessed_cell, [cv2.IMWRITE_JPEG_QUALITY, 90])
                         cell_image_paths.append(str(cell_image_path))
+                        if self.logger:
+                            self.logger.debug(f"Written cell image to: {cell_image_path}")
                     except Exception as e:
                         if self.logger:
                             self.logger.debug(f"Failed to save cell image ({row}, {col}) attempt {attempt + 1}: {e}")
@@ -593,6 +595,7 @@ class OCRProcessor:
                 'pipeline_steps', 'pipeline_config_path', 'failed_reason', 'cell_image_paths'
             ]
             save_csv(str(csv_path), csv_data, fieldnames, self.logger)
+            self.logger.info(f"Written predictions CSV to: {csv_path}")
         except IOError as e:
             self.logger.error(f"Failed to save CSV: {e}")
             raise

@@ -19,6 +19,7 @@ import argparse
 import itertools
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
+from src.utils import setup_logger
 
 
 class PipelineConfigGenerator:
@@ -362,6 +363,14 @@ def main():
 
     args = parser.parse_args()
 
+    # Set up logging
+    logger = setup_logger(
+        name='PipelineConfigGenerator',
+        log_dir='.logging',
+        debug=False,
+        console_output=True
+    )
+
     # Generate config
     generator = PipelineConfigGenerator(
         include_methods=args.include,
@@ -382,6 +391,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(config, f, indent=2)
 
+    logger.info(f"Written pipeline config with {len(config['preprocessing_chains'])} chains to: {output_path}")
     print(f"Generated pipeline config with {len(config['preprocessing_chains'])} chains")
     print(f"Saved to: {output_path}")
 

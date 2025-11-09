@@ -91,7 +91,7 @@ class PreprocessingPipeline:
 
     # Preprocessing methods
     @staticmethod
-    def apply_grayscale(image: np.ndarray) -> np.ndarray:
+    def apply_grayscale(image: np.ndarray, parameters: Dict[str, Any] = None) -> np.ndarray:
         """Convert image to grayscale."""
         if len(image.shape) == 3:
             return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -159,7 +159,7 @@ class PreprocessingPipeline:
         )
 
     @staticmethod
-    def apply_inversion(image: np.ndarray) -> np.ndarray:
+    def apply_inversion(image: np.ndarray, parameters: Dict[str, Any] = None) -> np.ndarray:
         """Invert image colors."""
         return cv2.bitwise_not(image)
 
