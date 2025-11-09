@@ -34,19 +34,19 @@ class ImageAnnotator:
     def annotate_image(
         self,
         image: np.ndarray,
-        predictions: Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict, List[str]]],
+        predictions: Dict[Tuple[int, int], Tuple[list, list]],
         predicted_text_size: float = 3,
         predicted_text_thickness: int = 8,
         conf_text_size: float = 1,
         conf_text_thickness: int = 3,
-        font_color: Tuple[int, int, int] = (0, 0, 190)
+        font_color: Tuple[int, int, int] = (0, 0, 255)
     ) -> np.ndarray:
         """
         Create annotated image with gridlines and predicted text.
 
         Args:
             image: Original image to annotate
-            predictions: Dictionary with (row, col) as key and (text, confidence, passes_validation, retry_attempt, chain_config, cell_image_paths) as value
+            predictions: Dictionary with (row, col) as key and (all_attempts, cell_image_paths) as value
             predicted_text_size: Font scale for predicted text (default: 3)
             predicted_text_thickness: Font thickness for predicted text (default: 8)
             conf_text_size: Font scale for confidence score text (default: 1)
@@ -62,6 +62,8 @@ class ImageAnnotator:
         if image is None or image.size == 0:
             raise ValueError("Invalid image for annotation")
 
+        # Make a copy of the image to annotate
+        annotated = image.copy()
 
         # Lighten the image by blending with white for better text visibility
         white_overlay = np.ones_like(annotated) * 255
@@ -108,7 +110,13 @@ class ImageAnnotator:
         font_thickness = predicted_text_thickness
         conf_font_thickness = conf_text_thickness
 
-        for (row, col), (text, confidence, _, _, _, _) in predictions.items():
+        for (row, col), (all_attempts, _) in predictions.items():
+            # Use the best attempt (highest confidence) for annotation
+            if not all_attempts:
+                continue
+            best_attempt = max(all_attempts, key=lambda x: x['confidence'])
+            text = best_attempt['text']
+            confidence = best_attempt['confidence']
             if 0 <= row < num_rows and 0 <= col < num_columns:
                 # Use config_manager to get cell coordinates based on actual column indices
                 left_pct, top_pct, right_pct, bottom_pct = self.config_manager.get_cell_bounds(row, col)

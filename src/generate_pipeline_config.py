@@ -19,7 +19,7 @@ import argparse
 import itertools
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
-from src.utils import setup_logger
+from utils import setup_logger
 
 
 class PipelineConfigGenerator:
@@ -41,16 +41,16 @@ class PipelineConfigGenerator:
         self.method_params = {
             'gaussian_blur': [
                 {'kernel': [k, k], 'sigmaX': 0, 'sigmaY': 0}
-                for k in [3, 5, 7, 9]
+                for k in [3, 5, 7, 9, 11]
             ],
             'edge_detection': self._generate_edge_detection_params(),
             'dilate': [
                 {'kernel': [k, k]}
-                for k in [3, 5, 7, 9]
+                for k in [3, 5, 7, 9, 11]
             ],
             'erode': [
                 {'kernel': [k, k]}
-                for k in [3, 5, 7, 9]
+                for k in [3, 5, 7, 9, 11]
             ],
             'threshold': [
                 {'threshold': t, 'max_value': 255}
@@ -75,7 +75,7 @@ class PipelineConfigGenerator:
             'morphology': [
                 {'operation': op, 'kernel': [k, k]}
                 for op in ['open', 'close']
-                for k in [3, 5]
+                for k in [3, 5, 7, 9, 11]
             ],
             'contrast': [
                 {'alpha': a, 'beta': b}

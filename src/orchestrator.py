@@ -320,7 +320,7 @@ class OCRProcessor:
         filename_prefix: str,
         run_id: str,
         cell_images_dir: str
-    ) -> Tuple[Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict, List[str]]], List[Dict[str, Any]]]:
+    ) -> Tuple[Dict[Tuple[int, int], Tuple[List[Dict], List[str]]], List[Dict[str, Any]]]:
         """
         Process cells with OCR and validation, with retry logic.
 
@@ -332,14 +332,15 @@ class OCRProcessor:
             cell_images_dir: Directory to save cell images
 
         Returns:
-            Tuple of (predictions_dict with validation status and pipeline info and cell image paths, failed_cells_list)
+            Tuple of (predictions_dict, failed_cells_list) where predictions_dict maps
+            (row, col) -> (all_attempts, cell_image_paths)
         """
         predictions = {}
         failed_cells = []
         retry_attempts = self.config_manager.get_retry_attempts()
 
         for (row, col), cell_image in sorted(cells.items()):
-            cell_text, cell_confidence, passes_validation, retry_attempt_used, chain_config, cell_image_paths = self._process_cell_with_retry(
+            all_attempts, cell_image_paths = self._process_cell_with_retry(
                 cell_image,
                 row,
                 col,
@@ -350,14 +351,16 @@ class OCRProcessor:
                 cell_images_dir
             )
 
-            if cell_text is not None:
-                predictions[(row, col)] = (cell_text, cell_confidence, passes_validation, retry_attempt_used, chain_config, cell_image_paths)
-                if not passes_validation:
+            if all_attempts:
+                predictions[(row, col)] = (all_attempts, cell_image_paths)
+                # Check if best attempt passed validation
+                best_attempt = max(all_attempts, key=lambda x: x['confidence'])
+                if not best_attempt['is_valid']:
                     failed_cells.append({
                         'row': row,
                         'col': col,
-                        'text': cell_text,
-                        'confidence': cell_confidence,
+                        'text': best_attempt['text'],
+                        'confidence': best_attempt['confidence'],
                         'failed_reason': 'Failed validation'
                     })
             else:
@@ -375,26 +378,32 @@ class OCRProcessor:
         row: int,
         col: int,
         retry_attempts: int,
-        predictions: Optional[Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict, List[str]]]] = None,
+        predictions: Optional[Dict[Tuple[int, int], Tuple[List[Dict], List[str]]]] = None,
         filename_prefix: str = "",
         run_id: str = "",
         cell_images_dir: str = ""
-    ) -> Tuple[Optional[str], float, bool, Optional[int], Optional[Dict], List[str]]:
+    ) -> Tuple[List[Dict], List[str]]:
         """
-        Process a single cell with all preprocessing chains and select highest confidence result.
+        Process a single cell with all preprocessing chains and return all attempts.
 
         Args:
             cell_image: Cell image
             row: Row index
             col: Column index
             retry_attempts: Maximum retry attempts
-            predictions: Dictionary of (row, col) -> (text, confidence, passes_validation, retry_attempt, chain, cell_image_paths) for previous rows
+            predictions: Dictionary of (row, col) -> (all_attempts, cell_image_paths) for previous rows
             filename_prefix: Prefix for output filenames
             run_id: Unique ID for this pipeline run
             cell_images_dir: Directory to save cell images
 
         Returns:
-            Tuple of (text, confidence, passes_validation, retry_attempt_used, chain_config, cell_image_paths)
+            Tuple of (all_attempts_list, cell_image_paths) where all_attempts_list contains dicts with:
+            - text: Raw OCR text
+            - confidence: OCR confidence score
+            - is_valid: Whether it passed validation
+            - validated_text: The validated/corrected text
+            - attempt: Attempt number (0-based)
+            - chain: Preprocessing chain configuration
         """
         # Store all OCR attempts with their metadata for later selection
         all_attempts = []
@@ -405,37 +414,47 @@ class OCRProcessor:
         if col == 1 and predictions is not None and row > 0:
             prev_key = (row - 1, 1)
             if prev_key in predictions:
-                prev_text, _, prev_passes_validation, _, _, _ = predictions[prev_key]
-                # Only use previous place if it passed validation
-                if prev_passes_validation:
-                    try:
-                        previous_place = int(prev_text)
-                    except (ValueError, TypeError):
-                        pass
+                prev_all_attempts, _ = predictions[prev_key]
+                if prev_all_attempts:
+                    # Get the best attempt (highest confidence)
+                    prev_best = max(prev_all_attempts, key=lambda x: x['confidence'])
+                    prev_passes_validation = prev_best['is_valid']
+                    prev_text = prev_best['text']
+                    # Only use previous place if it passed validation
+                    if prev_passes_validation:
+                        try:
+                            previous_place = int(prev_text)
+                        except (ValueError, TypeError):
+                            pass
 
         # Get previous row's score for ordering validation (only for score column)
         previous_score = None
         if col == 4 and predictions is not None and row > 0:
             prev_key = (row - 1, 4)
             if prev_key in predictions:
-                prev_text, _, prev_passes_validation, _, _, _ = predictions[prev_key]
-                # Only use previous score if it passed validation
-                if prev_passes_validation:
-                    try:
-                        previous_score = int(prev_text)
-                    except (ValueError, TypeError):
-                        pass
+                prev_all_attempts, _ = predictions[prev_key]
+                if prev_all_attempts:
+                    # Get the best attempt (highest confidence)
+                    prev_best = max(prev_all_attempts, key=lambda x: x['confidence'])
+                    prev_passes_validation = prev_best['is_valid']
+                    prev_text = prev_best['text']
+                    # Only use previous score if it passed validation
+                    if prev_passes_validation:
+                        try:
+                            previous_score = int(prev_text)
+                        except (ValueError, TypeError):
+                            pass
 
         for attempt in range(retry_attempts):
             try:
                 # Get preprocessing chain for this retry attempt
                 chain = self.config_manager.get_preprocessing_chain_by_retry_attempt(attempt)
 
-                # Skip attempt if no matching chain found
+                # Stop retrying if no more preprocessing chains available
                 if chain is None:
                     if self.logger:
-                        self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1}: No preprocessing chain found, skipping")
-                    continue
+                        self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1}: No more preprocessing chains available, stopping retries")
+                    break
 
                 # Apply preprocessing specific to this retry attempt
                 methods = chain.get('methods', [])
@@ -493,27 +512,20 @@ class OCRProcessor:
                 if self.logger:
                     self.logger.debug(f"Cell ({row}, {col}) attempt {attempt + 1} error: {e}")
 
-        # Select best result based on highest confidence
+        # Return all attempts
         if all_attempts:
             best_attempt = max(all_attempts, key=lambda x: x['confidence'])
             if self.logger:
-                self.logger.debug(f"Cell ({row}, {col}): Selected attempt with highest confidence: {best_attempt['text']} (conf: {best_attempt['confidence']:.2f}), valid: {best_attempt['is_valid']}")
-            return (
-                best_attempt['text'],
-                best_attempt['confidence'],
-                best_attempt['is_valid'],
-                best_attempt['attempt'],
-                best_attempt['chain'],
-                cell_image_paths
-            )
+                self.logger.debug(f"Cell ({row}, {col}): Completed {len(all_attempts)} attempts. Best: {best_attempt['text']} (conf: {best_attempt['confidence']:.2f}), valid: {best_attempt['is_valid']}")
+            return all_attempts, cell_image_paths
 
         if self.logger:
             self.logger.warning(f"Cell ({row}, {col}): No OCR results extracted from any attempt")
-        return None, 0.0, False, None, None, cell_image_paths
+        return [], cell_image_paths
 
     def _prepare_results(
         self,
-        predictions: Dict[Tuple[int, int], Tuple[str, float, bool, int, Dict, List[str]]],
+        predictions: Dict[Tuple[int, int], Tuple[List[Dict], List[str]]],
         failed_cells: List[Dict[str, Any]],
         image_path: str,
         process_start_time: str,
@@ -524,10 +536,10 @@ class OCRProcessor:
         img_height: int
     ) -> Dict[str, Any]:
         """
-        Prepare and save results to CSV only.
+        Prepare and save results to CSV with all attempts for each cell.
 
         Args:
-            predictions: Dictionary of predictions with validation status, retry attempt, and pipeline config
+            predictions: Dictionary mapping (row, col) -> (all_attempts_list, cell_image_paths)
             failed_cells: List of failed cells with failed_reason
             image_path: Original image path
             process_start_time: Timestamp when processing started
@@ -549,50 +561,62 @@ class OCRProcessor:
         # Get primary engine from config
         primary_engine = self.config_manager.get_primary_engine()
 
-        # Prepare CSV data
+        # Prepare CSV data - create one row per attempt per cell
         csv_data = []
-        for (row, col), (text, confidence, passes_validation, retry_attempt_used, chain_config, cell_image_paths) in sorted(predictions.items()):
+        for (row, col), (all_attempts, cell_image_paths) in sorted(predictions.items()):
             cell_x, cell_y, cell_w, cell_h = self.get_cell_coordinates_from_grid(row, col, img_width, img_height)
-
-            # Extract pipeline methods from chain_config
-            pipeline_steps = []
-            if chain_config and 'methods' in chain_config:
-                pipeline_steps = chain_config['methods']
 
             # Get failed reason if applicable
             failed_reason = failed_reasons.get((row, col), '')
 
-            # Generate unique key that includes retry attempt for tracking all processing attempts
-            attempt_num = retry_attempt_used if retry_attempt_used is not None else 0
-            unique_key = f"{filename_prefix}_{run_id}_r{row}_c{col}_atmpt{attempt_num}"
+            # Create one CSV row for each attempt
+            for attempt_data in all_attempts:
+                text = attempt_data['text']
+                confidence = attempt_data['confidence']
+                passes_validation = attempt_data['is_valid']
+                validated_text = attempt_data['validated_text']
+                retry_attempt_used = attempt_data['attempt']
+                chain_config = attempt_data['chain']
 
-            csv_data.append({
-                'unique_key': unique_key,
-                'row_id': row,
-                'column_id': col,
-                'predicted_text': text,
-                'confidence': f"{confidence:.4f}",
-                'passes_validation': str(passes_validation),
-                'text_coordinates': f"({cell_x}, {cell_y}, {cell_w}, {cell_h})",
-                'original_filepath': image_path,
-                'process_start_time': process_start_time,
-                'process_end_time': process_end_time,
-                'primary_engine': primary_engine,
-                'retry_attempt_used': attempt_num,
-                'pipeline_steps': json.dumps(pipeline_steps),
-                'pipeline_config_path': self.config_path,
-                'failed_reason': failed_reason,
-                'cell_image_paths': json.dumps(cell_image_paths)
-            })
+                # Extract pipeline methods from chain_config
+                pipeline_steps = []
+                if chain_config and 'methods' in chain_config:
+                    pipeline_steps = chain_config['methods']
+
+                # Generate unique key that includes retry attempt for tracking all processing attempts
+                unique_key = f"{filename_prefix}_{run_id}_r{row}_c{col}_atmpt{retry_attempt_used}"
+
+                # Get the specific cell image path for this attempt
+                cell_image_path = cell_image_paths[retry_attempt_used] if retry_attempt_used < len(cell_image_paths) else ''
+
+                csv_data.append({
+                    'unique_key': unique_key,
+                    'row_id': row,
+                    'column_id': col,
+                    'predicted_text': text,
+                    'validated_text': validated_text,
+                    'confidence': f"{confidence:.4f}",
+                    'passes_validation': str(passes_validation),
+                    'text_coordinates': f"({cell_x}, {cell_y}, {cell_w}, {cell_h})",
+                    'original_filepath': image_path,
+                    'process_start_time': process_start_time,
+                    'process_end_time': process_end_time,
+                    'primary_engine': primary_engine,
+                    'retry_attempt_used': retry_attempt_used,
+                    'pipeline_steps': json.dumps(pipeline_steps),
+                    'pipeline_config_path': self.config_path,
+                    'failed_reason': failed_reason,
+                    'cell_image_path': cell_image_path
+                })
 
         # Save CSV
         csv_path = Path(self.output_paths['predictions']) / f"{filename_prefix}_{run_id}_predictions.csv"
         try:
             fieldnames = [
-                'unique_key', 'row_id', 'column_id', 'predicted_text', 'confidence', 'passes_validation',
-                'text_coordinates', 'original_filepath', 'preprocessed_filepath',
+                'unique_key', 'row_id', 'column_id', 'predicted_text', 'validated_text',
+                'confidence', 'passes_validation', 'text_coordinates', 'original_filepath',
                 'process_start_time', 'process_end_time', 'primary_engine', 'retry_attempt_used',
-                'pipeline_steps', 'pipeline_config_path', 'failed_reason', 'cell_image_paths'
+                'pipeline_steps', 'pipeline_config_path', 'failed_reason', 'cell_image_path'
             ]
             save_csv(str(csv_path), csv_data, fieldnames, self.logger)
             self.logger.info(f"Written predictions CSV to: {csv_path}")
@@ -600,16 +624,18 @@ class OCRProcessor:
             self.logger.error(f"Failed to save CSV: {e}")
             raise
 
-        # Count valid vs invalid predictions
-        valid_count = sum(1 for _, _, passes_validation, _, _, _ in predictions.values() if passes_validation)
-        invalid_count = len(predictions) - valid_count
+        # Count total attempts (rows in CSV) and valid attempts
+        total_attempts = len(csv_data)
+        valid_attempts = sum(1 for row in csv_data if row['passes_validation'] == 'True')
+        invalid_attempts = total_attempts - valid_attempts
 
-        self.logger.info(f"Processing complete: {valid_count} valid, {invalid_count} invalid, {len(failed_cells)} failed out of {12*3} total cells")
+        self.logger.info(f"Processing complete: {len(predictions)} cells processed, {total_attempts} total attempts, {valid_attempts} valid attempts, {len(failed_cells)} failed cells")
 
         # Return summary metadata
         return {
-            'valid_predictions': valid_count,
-            'invalid_predictions': invalid_count,
+            'valid_attempts': valid_attempts,
+            'invalid_attempts': invalid_attempts,
+            'total_attempts': total_attempts,
             'failed_cells': len(failed_cells),
             'extracted_cells': len(predictions),
             'output_file': str(csv_path)
