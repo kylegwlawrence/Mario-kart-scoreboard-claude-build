@@ -1,0 +1,37 @@
+{
+  "_general_file_comment": "These pipelines scored the best in predictions from test_pipelines and test_pipelines_2 configs. November 9, 2025",
+  "image_source": "./pngs",
+  "output_paths": {
+    "annotated": "output/annotated_images/best_pipelines",
+    "predictions": "output/predictions/best_pipelines",
+    "cell_images": "output/cell_images",
+    "logs": ".logging"
+  },
+  "primary_engine": "easyocr",
+  "retry_attempts": 100,
+  "fuzzy_threshold": 0.8,
+  "_preprocessing_chains_comment": "The first 5 pipelines scored the best for test_pipelines_2 run.",
+  "preprocessing_chains": [
+
+     {
+      "retry_attempt": 0,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "dilate", "parameters": {"kernel": [3, 3]}}]
+     },
+     {
+      "retry_attempt": 1,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "gaussian_blur", "parameters": {"kernel": [9, 9], "sigmaX": 0, "sigmaY": 0}}]
+     },
+     {
+      "retry_attempt": 2,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "close", "kernel": [3, 3]}}]
+     },
+     {
+      "retry_attempt": 3,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "gaussian_blur", "parameters": {"kernel": [7, 7], "sigmaX": 0, "sigmaY": 0}}]
+     },
+     {
+      "retry_attempt": 4,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "gaussian_blur", "parameters": {"kernel": [11, 11], "sigmaX": 0, "sigmaY": 0}}]
+     }
+  ]
+}

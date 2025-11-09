@@ -1,0 +1,60 @@
+{
+  "_general_file_comment": "These pipelines scored the best in predictions from test_pipelines and test_pipelines_2 configs. November 9, 2025",
+  "image_source": "./pngs",
+  "output_paths": {
+    "annotated": "output/annotated_images/morphologies",
+    "predictions": "output/predictions/morphologies",
+    "cell_images": "output/cell_images/morphologies",
+    "logs": ".logging"
+  },
+  "primary_engine": "easyocr",
+  "retry_attempts": 100,
+  "fuzzy_threshold": 0.8,
+  "_preprocessing_chains_comment": "The first 5 pipelines scored the best for test_pipelines_2 run.",
+  "preprocessing_chains": [
+     {
+      "retry_attempt": 0,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "close", "kernel": [3, 3]}}]
+     },
+     {
+      "retry_attempt": 1,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "open", "kernel": [5, 5]}}]
+     },
+     {
+      "retry_attempt": 2,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "open", "kernel": [7, 7]}}]
+     },
+     {
+      "retry_attempt": 3,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "open", "kernel": [9, 9]}}]
+     },
+     {
+      "retry_attempt": 4,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "open", "kernel": [11, 11]}}]
+     },
+     {
+      "retry_attempt": 5,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "open", "kernel": [13, 13]}}]
+     },
+     {
+      "retry_attempt": 6,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "close", "kernel": [5, 5]}}]
+     },
+     {
+      "retry_attempt": 7,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "close", "kernel": [7, 7]}}]
+     },
+     {
+      "retry_attempt": 8,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "close", "kernel": [9, 9]}}]
+     },
+     {
+      "retry_attempt": 9,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "close", "kernel": [11, 11]}}]
+     },
+     {
+      "retry_attempt": 10,
+      "methods": [{"method": "grayscale", "parameters": null}, {"method": "inversion", "parameters": null}, {"method": "morphology", "parameters": {"operation": "close", "kernel": [13, 13]}}]
+     }
+  ]
+}

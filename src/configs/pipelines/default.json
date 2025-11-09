@@ -18,86 +18,8 @@
           "parameters": null
         },
         {
-          "method": "gaussian_blur",
-          "parameters": {
-            "kernel": [
-              5,
-              5
-            ],
-            "sigmaX": 0,
-            "sigmaY": 0
-          }
-        },
-        {
-          "method": "threshold",
-          "parameters": {
-            "threshold": 150,
-            "max_value": 255
-          }
-        }
-      ]
-    },
-    {
-      "retry_attempt": 1,
-      "methods": [
-        {
-          "method": "grayscale",
-          "parameters": null
-        },
-        {
           "method": "inversion",
           "parameters": null
-        }
-      ]
-    },
-    {
-      "retry_attempt": 2,
-      "methods": [
-        {
-          "method": "grayscale",
-          "parameters": null
-        },
-        {
-          "method": "inversion",
-          "parameters": null
-        },
-        {
-          "method": "gaussian_blur",
-          "parameters": {
-            "kernel": [
-              5,
-              5
-            ],
-            "sigmaX": 0,
-            "sigmaY": 0
-          }
-        },
-        {
-          "method": "bilateral_filter",
-          "parameters": {
-            "d": 9,
-            "sigmaColor": 75,
-            "sigmaSpace": 75
-          }
-        },
-        {
-          "method": "edge_detection",
-          "parameters": {
-            "hysteresis_min": 125,
-            "hysteresis_max": 175
-          }
-        },
-        {
-          "method": "dilate",
-          "parameters": {
-            "kernel": [7,7]
-          }
-        },
-        {
-          "method": "erode",
-          "parameters": {
-            "kernel": [7,7]
-          }
         }
 
       ]

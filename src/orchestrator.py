@@ -182,8 +182,12 @@ class OCRProcessor:
                 image,
                 predictions
             )
+            # Downscale image by 50%
+            h, w = annotated_image.shape[:2]
+            downscaled_image = cv2.resize(annotated_image, (w // 3, h // 3))
+
             annotated_path = Path(self.output_paths['annotated']) / f"{output_filename_prefix}_{run_id}_annotated.jpg"
-            cv2.imwrite(str(annotated_path), annotated_image, [cv2.IMWRITE_JPEG_QUALITY, 90])
+            cv2.imwrite(str(annotated_path), downscaled_image, [cv2.IMWRITE_JPEG_QUALITY, 90])
             self.logger.info(f"Written annotated image to: {annotated_path}")
         except Exception as e:
             self.logger.error(f"Failed to create/save annotated image: {e}")
