@@ -32,12 +32,12 @@ def main():
         description="Merge multiple prediction CSV files into a single CSV file"
     )
     parser.add_argument(
-        "predictions_dir",
+        "--predictions_dir",
         type=str,
         help="Directory containing prediction CSV files (default: output/predictions)"
     )
     parser.add_argument(
-        "merged_csv_path",
+        "--merged_csv_path",
         type=str,
         help="Output path for the merged CSV file (default: analysis/all_predictions.csv)"
     )
