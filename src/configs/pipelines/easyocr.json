@@ -1,4 +1,6 @@
 {
+  "_general_file_comment": "Configuration optimized for EasyOCR with edge detection and morphological operations",
+  "_preprocessing_chains_comment": "Tests various edge detection thresholds, gaussian blur kernels, and morphological operations (dilate/erode)",
   "image_source": "./pngs",
   "output_paths": {
     "annotated": "output/annotated_images",

@@ -1,4 +1,6 @@
 {
+  "_general_file_comment": "Extensive test configuration with 100 retry attempts testing comprehensive preprocessing combinations",
+  "_preprocessing_chains_comment": "Comprehensive testing of morphology operations, edge detection, gaussian blur, and morphological operations (dilate/erode)",
   "image_source": "./pngs",
   "output_paths": {
     "annotated": "output/annotated_images",

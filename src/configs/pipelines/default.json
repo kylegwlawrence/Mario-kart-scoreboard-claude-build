@@ -1,4 +1,6 @@
 {
+  "_general_file_comment": "Default pipeline configuration with minimal preprocessing and quick retry strategy",
+  "_preprocessing_chains_comment": "Basic grayscale and inversion preprocessing for initial attempt",
   "image_source": "./pngs",
   "output_paths": {
     "annotated": "output/annotated_images",

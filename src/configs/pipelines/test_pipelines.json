@@ -1,4 +1,6 @@
 {
+  "_general_file_comment": "Comprehensive test configuration exploring edge detection variations with 30 retry attempts",
+  "_preprocessing_chains_comment": "Tests multiple edge detection thresholds and various morphological operations",
   "image_source": "./pngs/",
   "output_paths": {
     "annotated": "output/annotated_images",
