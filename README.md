@@ -375,26 +375,6 @@ pip install paddlepaddle paddleocr
 - Process images in batches (default config does this)
 - Reduce image resolution in preprocessing
 
-## Development
-
-### Code Formatting
-```bash
-black src/ main.py
-```
-
-### Type Checking
-```bash
-mypy src/ main.py
-```
-
-## Future Enhancements
-
-- [ ] Multi-image batch processing optimization
-- [ ] Result caching to avoid re-processing
-- [ ] Web API interface
-- [ ] Real-time video stream processing
-- [ ] Custom model training for improved accuracy
-- [ ] Distributed processing for large batches
 
 ## License
 
