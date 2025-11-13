@@ -259,6 +259,17 @@ Columns:
 - **failed_reason**: Reason for failure (if validation failed)
 - **cell_image_paths**: Paths to extracted cell images
 
+## Example Output
+
+Here's an example of an annotated scoreboard image showing the detected grid, OCR predictions, and confidence scores:
+
+![Example annotated Mario Kart scoreboard](example_results.jpg)
+
+The annotated image includes:
+- Grid cell boundaries (blue rectangles)
+- Extracted text for place, player name, and score
+- Confidence scores for each prediction
+
 ## Validation Rules
 
 The system extracts three columns from the scoreboard: **place (column 1), player name (column 2), and score (column 4)**.
