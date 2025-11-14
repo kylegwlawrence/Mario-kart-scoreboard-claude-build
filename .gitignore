@@ -14,3 +14,4 @@ output/
 pngs/
 heics/
 analysis/
+.env
