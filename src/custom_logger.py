@@ -1,12 +1,12 @@
 import logging
+import os
 
-def get_custom_logger(name, level=logging.DEBUG, log_file=None):
-
+def get_custom_logger(name=__name__, level=logging.DEBUG, log_file=None):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
     
-    formatter = logging.Formatter("{asctime} - {levelname} - {message}"
+    formatter = logging.Formatter("{asctime} - {levelname} - {name} - {message}"
                                 , style="{"
                                 , datefmt="%Y-%m-%d %H:%M")
 
