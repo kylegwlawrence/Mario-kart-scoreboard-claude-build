@@ -8,13 +8,17 @@ import requests
 
 class SlackBase:
 
-    def __init__(self, channel_id: str, bot_token: str):
+    def __init__(self, channel_id: str, bot_token: str, user_token: str = None):
+        self.logger = get_custom_logger(__name__)
         self.channel_id = channel_id
         self.bot_token = bot_token
-        self.logger = get_custom_logger(__name__)
-        self._test_auth()
+        self._test_bot_auth()
+        if user_token is not None:
+            self.user_token = user_token
+            self._test_user_auth()
 
-    def _test_auth(self):
+
+    def _test_bot_auth(self):
         """
         Tests authorization and assigns self.bot_user_id
         """
@@ -23,6 +27,20 @@ class SlackBase:
             client = WebClient(self.bot_token)
             auth_test = client.auth_test()
             self.bot_user_id = auth_test["user_id"]
+            self.logger.info(f"Authentication successful.")
+        except SlackApiError as e:
+            self.logger.exception(e)
+            raise
+        
+    def _test_user_auth(self):
+        """
+        Tests authorization and assigns self.bot_user_id
+        """
+        try:
+            self.logger.info("Testing Slack auth...")
+            client = WebClient(self.bot_token)
+            auth_test = client.auth_test()
+            self.user_id = auth_test["user_id"]
             self.logger.info(f"Authentication successful.")
         except SlackApiError as e:
             self.logger.exception(e)
@@ -65,7 +83,7 @@ class SlackPoller(SlackBase):
     
 class SlackHandler(SlackBase):
 
-    def _get_file_url(self) -> None:
+    def _get_file_info(self) -> None:
         """
         Get the private url of the file in the channel. 
         Assumption: only 0 or 1 files can be in the channel. Any more throws and errors
@@ -74,13 +92,15 @@ class SlackHandler(SlackBase):
         try:
             response = client.files_list(channel=self.channel_id)
             if len(response["files"])==1:
-                self.logger.info(f"File retrieval successful. File: {response['files'][0]['name']}")
                 self.file_name = response["files"][0]["name"] # this gives us name with extension
                 self.url_private = response["files"][0]["url_private"]
                 self.file_id = response["files"][0]["id"]
+                self.logger.info("Retrieved file info from file in Slack")
             elif len(response["files"])==0 or response["files"] is None:
+                self.file_name = None
+                self.url_private = None
+                self.file_id = None
                 self.logger.info("File retrieval successful. No files in Slack channel")
-                return None
             elif len(response["files"])>1:
                 self.logger.exception("There is more than one file in the slack channel. There can only be 0 or 1 file in the channel.")
                 raise
@@ -90,34 +110,39 @@ class SlackHandler(SlackBase):
         
     def download_file(self, output_dir:str) -> None:
         """
-        Use a private url to download the file
+        Use a private url to download the file, if a file exists
         """
-        self._get_file_url()
-        output_path = f"{output_dir}/{self.file_name}"
-        try:
-            headers = {'Authorization': f'Bearer {self.bot_token}'}
-            download_response = requests.get(self.url_private, headers=headers, stream=True)
-            download_response.raise_for_status()  # Raises an exception for bad status codes
-            with open(f"{output_path}", 'wb') as f:
-                for chunk in download_response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            self.logger.info(f"File download successful. File saved to: {output_path}")
-        except requests.exceptions.RequestException as e:
-            self.logger.exception(e)
-            raise
+        self._get_file_info()
+        if self.file_id is not None:
+            
+            output_path = f"{output_dir}/{self.file_name}"
+            try:
+                headers = {'Authorization': f'Bearer {self.bot_token}'}
+                download_response = requests.get(self.url_private, headers=headers, stream=True)
+                download_response.raise_for_status()  # Raises an exception for bad status codes
+                with open(f"{output_path}", 'wb') as f:
+                    for chunk in download_response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                self.logger.info(f"File download successful. File saved to: {output_path}")
+            except requests.exceptions.RequestException as e:
+                self.logger.exception(e)
+                raise
+        else:
+            self.logger.info("No files to download")
         
-    def _upload_file(self, file_path:str, title:str, initial_comment:str):
+    def _upload_file(self, file_path:str, image_title:str, initial_comment:str = None):
         """
         Upload a file to the slack channel
+        Add: prefix on the name to identify bot published files
         """
         client = WebClient(self.bot_token)
         try:
             self.new_file = client.files_upload_v2(
             channel=self.channel_id,
-            title=title,
+            title=image_title,
             file=file_path,
             initial_comment=initial_comment)
-            self.logger.info(f"File '{title}' uploaded successfully to Slack")
+            self.logger.info(f"File '{image_title}' uploaded successfully to Slack")
         except SlackApiError as e:
             self.logger.exception(e)
             raise
@@ -125,58 +150,66 @@ class SlackHandler(SlackBase):
     def _share_file(self):
         """
         An uploaded file stills needs to be shared with the channel, so this is executed after uploading a file.
+        Apparently you don't need to share the file since files_upload_v2 makes it viewable in the channel
         """
         client = WebClient(self.bot_token)
         try:
             self.file_url = self.new_file.get("file").get("permalink")
             self.new_message = client.chat_postMessage(
-            channel=self.channel,
+            channel=self.channel_id,
             text=f"Here is the file url: {self.file_url}")
             self.logger.info(f"File shared successfully with URL: {self.file_url}")
         except SlackApiError as e:
             self.logger.exception(e)
             raise
     
-    def publish_file(self, file_path) -> str:
+    def publish_file(self, file_path, image_title, initial_comment) -> str:
         """
-        Uploads a file and shares it with the channel
+        Uploads a file, names it, and adds a comment to the message
         """
-        self._upload_file(file_path)
-        self._share_file()
-        return self.file_url
+        self._upload_file(file_path, image_title, initial_comment)
+        #self._share_file()
+        #return self.file_url
     
-    def delete_file(self):
+    def delete_file(self) -> None:
         """
         Delete a file from the slack channel.
         Required after a new file has been downloaded. Since we always want to grab the newest file, instead of searching through the files' metadata, we will always know the one file in the channel is all we need
+        Must use a USER_TOKEN instead of a BOT_TOKEN - bots cannot delete a file that they don't own.
         """
-        client = WebClient(self.bot_token)
-        try:
-            client.files_delete(self.file_id)
-            self.logger.info(f"File '{self.file_id}' deleted successfully from Slack")
-        except SlackApiError as e:
-            self.logger.exception(e)
-            raise
+        self._get_file_info()
+        if self.file_id is not None:
+            client = WebClient(self.user_token)
+            try:
+                client.files_delete(file=self.file_id)
+                self.logger.info(f"File '{self.file_id}' has been deleted from Slack")
+            except SlackApiError as e:
+                self.logger.exception(e)
+                raise
+        else:
+            self.logger.info("No files to delete")
     
-    def send_message(self, message):
+    def send_message(self, message) -> None:
         client = WebClient(self.bot_token)
         try:
-            response = client.chat_postMessage(
+            client.chat_postMessage(
                 channel=self.channel_id,
                 text=message
             )
             self.logger.info("Message sent successfully to Slack channel")
-            return response
         except SlackApiError as e:
-            # You will get a SlackApiError if "ok" is False
             self.logger.exception(e)
             raise
-            
+    
 if __name__ == "__main__":
     load_dotenv()
     
-    poller = SlackPoller(os.getenv("CHANNEL_ID"), os.getenv("BOT_TOKEN"))
-    result = poller.poll()
+    handler = SlackHandler(os.getenv("CHANNEL_ID"), os.getenv("BOT_TOKEN"), os.getenv("USER_TOKEN"))
     
-    handler = SlackHandler(os.getenv("CHANNEL_ID"), os.getenv("BOT_TOKEN"))
-    handler.download_file("jpgs")
+    handler.delete_file()
+    
+    handler.publish_file(
+        file_path="jpgs/IMG_7995.jpg"
+        , image_title = "bot_upload"
+        , initial_comment="Hey ya fat dink"
+        )
