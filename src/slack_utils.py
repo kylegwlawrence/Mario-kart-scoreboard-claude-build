@@ -8,12 +8,29 @@ import requests
 
 # ref: https://docs.slack.dev/tools/python-slack-sdk/tutorial/uploading-files/#upload-file
 
-class SlackPoller():
-    
-    def __init__(self, channel_id:str, bot_token:str):
+class SlackBase:
+    def __init__(self, channel_id: str, bot_token: str):
         self.channel_id = channel_id
         self.bot_token = bot_token
+        self._test_auth()
+    
+    def _test_auth(self): 
+        """
+        Tests authorization and assigns self.bot_user_id
+        """
+        logger = get_custom_logger(name=os.path.splitext(os.path.basename(__file__))[0], level=logging.DEBUG, log_file='app.log')
+        try:
+            client = WebClient(self.bot_token)
+            auth_test = client.auth_test()
+            self.bot_user_id = auth_test["user_id"]
+            logger.info(f"App's bot user: {self.bot_user_id}")
+        except SlackApiError as e:
+            logger.exception(e)
+            raise
 
+
+class SlackPoller(SlackBase):
+        
     def _poll_for_one_file(self) -> bool:
         """
         Polls a slack channel to check for the existence of one file in the channel
@@ -30,6 +47,7 @@ class SlackPoller():
             response = client.files_list(channel=self.channel_id)
             if len(response["files"]) == 1:
                 logger.info(f"Successfully found one file in slack")
+                return True
             elif len(response["files"])==0 or response["files"] is None:
                 logger.info("No files in slack")
                 return False
@@ -47,21 +65,21 @@ class SlackPoller():
         result = self._poll_for_one_file(self.channel_id, self.bot_token)
         return result
     
-class SlackHandler():
-    def __init__(self, channel_id:str, bot_token:str):
-        self.channel_id = channel_id
-        self.bot_token = bot_token
-        self._test_auth()
+class SlackHandler(SlackBase):
         
     def _test_auth(self): # shold this be a method in another Slack class?
         """
-        Tests to see if the token is valid
+        Tests to see if the token is valid, and assigns self.bot_user_id
         """
         logger = get_custom_logger(name=os.path.splitext(os.path.basename(__file__))[0], level=logging.DEBUG, log_file='app.log')
-        client = WebClient(self.bot_token)
-        auth_test = client.auth_test()
-        self.bot_user_id = auth_test["user_id"]
-        logger.info(f"App's bot user: {self.bot_user_id}")
+        try:
+            client = WebClient(self.bot_token)
+            auth_test = client.auth_test()
+            self.bot_user_id = auth_test["user_id"]
+            logger.info(f"App's bot user: {self.bot_user_id}")
+        except SlackApiError as e:
+            logger.exception(e)
+            raise
 
     def _get_file_url(self) -> None:
         """
