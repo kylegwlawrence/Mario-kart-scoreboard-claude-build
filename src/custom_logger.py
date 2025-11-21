@@ -1,7 +1,6 @@
 import logging
-import os
 
-def get_custom_logger(name=__name__, level=logging.DEBUG, log_file=None):
+def get_custom_logger(name=__name__, level=logging.DEBUG, log_file="app.log"):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
