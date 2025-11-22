@@ -19,7 +19,7 @@ import argparse
 import itertools
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
-from utils import setup_logger
+from src.custom_logger import setup_logger
 
 
 class PipelineConfigGenerator:

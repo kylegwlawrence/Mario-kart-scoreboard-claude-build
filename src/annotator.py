@@ -1,6 +1,12 @@
-"""
-Table detection and annotation module for Mario Kart scoreboard.
-Detects table bounds and creates annotated images.
+"""Image annotation module for Mario Kart scoreboard analysis.
+
+This module provides functionality to annotate scoreboard images with grid lines,
+predicted text results, and confidence scores. It uses configuration-based bounds
+to draw grid overlays matching the table structure and displays OCR predictions
+with their confidence levels.
+
+Classes:
+    ImageAnnotator: Annotates images with grid lines and OCR predictions.
 """
 
 import logging
@@ -11,18 +17,29 @@ from src.config_manager import ConfigManager
 
 
 class ImageAnnotator:
-    """Annotates the scoreboard image with grid lines, predicted text, and confidence."""
+    """Annotates Mario Kart scoreboard images with grid lines and OCR predictions.
+
+    Overlays grid lines based on configured table bounds and displays OCR
+    predictions with confidence scores at their corresponding cell locations.
+    The image is lightened for improved text visibility.
+
+    Attributes:
+        config_manager (ConfigManager): Manages table bounds and grid configuration.
+        logger (Optional[logging.Logger]): Logger for tracking operations.
+    """
+
     def __init__(
         self,
         config_manager: ConfigManager,
         logger: Optional[logging.Logger] = None
     ):
-        """
-        Initialize image annotator.
+        """Initialize the ImageAnnotator.
 
         Args:
-            config_manager: Configuration manager instance
-            logger: Logger instance
+            config_manager (ConfigManager): Configuration manager providing table
+                bounds, row/column definitions, and cell coordinate information.
+            logger (Optional[logging.Logger]): Logger instance for logging operations.
+                Defaults to None.
         """
         self.config_manager = config_manager
         self.logger = logger
@@ -40,23 +57,31 @@ class ImageAnnotator:
         conf_text_thickness: int = 3,
         font_color: Tuple[int, int, int] = (0, 0, 255)
     ) -> np.ndarray:
-        """
-        Create annotated image with gridlines and predicted text.
+        """Create annotated image with grid lines and OCR predictions.
+
+        Overlays a grid based on configured table bounds and annotates each cell
+        with the best OCR prediction and its confidence score. The image is
+        lightened by blending with white to improve text visibility.
 
         Args:
-            image: Original image to annotate
-            predictions: Dictionary with (row, col) as key and (all_attempts, cell_image_paths) as value
-            predicted_text_size: Font scale for predicted text (default: 3)
-            predicted_text_thickness: Font thickness for predicted text (default: 8)
-            conf_text_size: Font scale for confidence score text (default: 1)
-            conf_text_thickness: Font thickness for confidence score text (default: 3)
-            font_color: RGB color tuple for text (default: (0, 0, 190) - red)
+            image (np.ndarray): Original scoreboard image to annotate.
+            predictions (Dict[Tuple[int, int], Tuple[list, list]]): Dictionary mapping
+                (row, col) cell coordinates to tuples of (all_attempts, cell_image_paths),
+                where all_attempts is a list of dicts containing 'text' and 'confidence'.
+            predicted_text_size (float): Font scale for OCR text labels. Defaults to 3.
+            predicted_text_thickness (int): Font thickness for OCR text labels.
+                Defaults to 8.
+            conf_text_size (float): Font scale for confidence score text. Defaults to 1.
+            conf_text_thickness (int): Font thickness for confidence score text.
+                Defaults to 3.
+            font_color (Tuple[int, int, int]): BGR color tuple for text rendering.
+                Defaults to (0, 0, 255) for red.
 
         Returns:
-            Annotated image
+            np.ndarray: Annotated image with grid lines and prediction text overlaid.
 
         Raises:
-            ValueError: If image or predictions are invalid
+            ValueError: If image is None, empty, or has invalid dimensions.
         """
         if image is None or image.size == 0:
             raise ValueError("Invalid image for annotation")

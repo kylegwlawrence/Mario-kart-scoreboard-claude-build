@@ -6,65 +6,8 @@ import logging
 import os
 import json
 import csv
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-
-
-def setup_logger(
-    name: str,
-    log_dir: str,
-    debug: bool = False,
-    console_output: bool = True,
-    console_level: Optional[int] = None
-) -> logging.Logger:
-    """
-    Set up a logger with both file and console handlers.
-
-    Args:
-        name: Logger name
-        log_dir: Directory to save log files
-        debug: Enable debug mode (verbose logging)
-        console_output: Whether to print to console
-        console_level: Log level for console handler (defaults to DEBUG in debug mode, WARNING otherwise)
-
-    Returns:
-        Configured logger instance
-    """
-    # Create log directory if it doesn't exist
-    Path(log_dir).mkdir(parents=True, exist_ok=True)
-
-    # Create logger
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG if debug else logging.WARNING)
-
-    # Clear existing handlers
-    logger.handlers.clear()
-
-    # Create formatter
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-
-    # File handler
-    log_file = os.path.join(log_dir, f'{name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log')
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG if debug else logging.WARNING)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-
-    # Console handler
-    if console_output:
-        console_handler = logging.StreamHandler()
-        if console_level is not None:
-            console_handler.setLevel(console_level)
-        else:
-            console_handler.setLevel(logging.DEBUG if debug else logging.WARNING)
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-
-    return logger
 
 
 def save_csv(

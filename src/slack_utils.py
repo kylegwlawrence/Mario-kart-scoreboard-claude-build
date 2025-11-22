@@ -13,7 +13,7 @@ Classes:
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-from custom_logger import get_custom_logger
+from src.custom_logger import get_custom_logger
 import logging
 import os
 import requests

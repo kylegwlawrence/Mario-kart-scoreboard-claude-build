@@ -10,7 +10,14 @@ from src.utils import load_json
 
 
 class ConfigManager:
-    """Manages configuration loading and validation."""
+    """
+    Manages configuration loading and validation for the OCR pipeline.
+
+    Loads and validates three configuration files:
+    - Main pipeline config (image source, output paths, preprocessing chains, engine settings)
+    - Grid config (table bounds and cell layout)
+    - OCR engines config (available OCR engines and character validation data)
+    """
 
     def __init__(self, config_path: str, logger: Optional[logging.Logger] = None):
         """
@@ -158,11 +165,21 @@ class ConfigManager:
         return ocr_engines_config
 
     def get_preprocessing_chains(self) -> List[Dict[str, Any]]:
-        """Get all preprocessing chains."""
+        """
+        Get all preprocessing chains from the configuration.
+
+        Returns:
+            List of preprocessing chain configurations, each containing methods and retry_attempt
+        """
         return self.config.get('preprocessing_chains', [])
 
     def get_primary_engine(self) -> str:
-        """Get the primary OCR engine name."""
+        """
+        Get the primary OCR engine name.
+
+        Returns:
+            Primary OCR engine name (e.g., 'tesseract', 'paddleocr', 'easyocr'), defaults to 'tesseract'
+        """
         return self.config.get('primary_engine', 'tesseract')
 
     def get_engine_config(self, engine_name: str) -> Dict[str, Any]:
@@ -178,7 +195,12 @@ class ConfigManager:
         return self.ocr_engines_config.get('engines', {}).get(engine_name, {})
 
     def get_retry_attempts(self) -> int:
-        """Get maximum number of retry attempts."""
+        """
+        Get maximum number of retry attempts for OCR processing.
+
+        Returns:
+            Maximum number of retry attempts, defaults to 3
+        """
         return self.config.get('retry_attempts', 3)
 
     def get_preprocessing_chain_by_retry_attempt(self, attempt: int) -> Optional[Dict[str, Any]]:
@@ -200,31 +222,66 @@ class ConfigManager:
         return None
 
     def get_output_paths(self) -> Dict[str, str]:
-        """Get output paths."""
+        """
+        Get output paths for pipeline results.
+
+        Returns:
+            Dictionary with keys 'annotated', 'predictions', 'cell_images', 'logs' pointing to output directories
+        """
         return self.config.get('output_paths', {})
 
     def get_image_source(self) -> str:
-        """Get image source directory."""
+        """
+        Get the image source directory path.
+
+        Returns:
+            Path to the directory containing input images for processing
+        """
         return self.config.get('image_source', '')
 
     def get_character_names_csv(self) -> str:
-        """Get character names CSV path from OCR engines config."""
+        """
+        Get the character names CSV path for name validation.
+
+        Returns:
+            Path to CSV file containing valid character names for fuzzy matching validation
+        """
         return self.ocr_engines_config.get('character_names_csv', 'data/character_info.csv')
 
     def get_num_rows(self) -> int:
-        """Get number of rows in the table grid."""
+        """
+        Get number of rows in the Mario Kart scoreboard table grid.
+
+        Returns:
+            Number of rows, typically 12 for a standard scoreboard
+        """
         return self.grid_config.get('num_rows', 12)
 
     def get_num_columns(self) -> int:
-        """Get number of columns in the table grid."""
+        """
+        Get number of columns in the Mario Kart scoreboard table grid.
+
+        Returns:
+            Number of columns, typically 5 (rank, player name, character, score, etc.)
+        """
         return self.grid_config.get('num_columns', 5)
 
     def get_column_bounds(self) -> List[List[float]]:
-        """Get column bounds as list of [left, right] percentage pairs."""
+        """
+        Get column bounds as list of [left, right] percentage pairs.
+
+        Returns:
+            List of column boundaries as [left%, right%] pairs where percentages are 0.0-1.0
+        """
         return self.grid_config.get('column_bounds', [])
 
     def get_row_bounds(self) -> List[List[float]]:
-        """Get row bounds as list of [top, bottom] percentage pairs."""
+        """
+        Get row bounds as list of [top, bottom] percentage pairs.
+
+        Returns:
+            List of row boundaries as [top%, bottom%] pairs where percentages are 0.0-1.0
+        """
         return self.grid_config.get('row_bounds', [])
 
     def get_cell_bounds(self, row: int, col: int) -> tuple:

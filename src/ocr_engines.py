@@ -15,7 +15,19 @@ if TYPE_CHECKING:
 
 
 class OCREngine:
-    """Unified OCR class to handle multiple different OCR libraries"""
+    """
+    Unified OCR interface supporting multiple OCR libraries.
+
+    Provides a consistent API for text extraction using PaddleOCR, Tesseract, or EasyOCR.
+    Handles engine initialization, configuration loading, and text extraction with
+    normalized output format across all engines.
+
+    Attributes:
+        SUPPORTED_ENGINES: List of supported OCR engines ['paddleocr', 'tesseract', 'easyocr']
+        primary_engine: The active OCR engine being used
+        config_manager: Configuration manager for loading engine parameters
+        engine: The initialized OCR engine object
+    """
 
     SUPPORTED_ENGINES = ['paddleocr', 'tesseract', 'easyocr']
 
@@ -122,7 +134,19 @@ class OCREngine:
         self,
         image: np.ndarray
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
-        """Extract text using PaddleOCR."""
+        """
+        Extract text from image using PaddleOCR.
+
+        Args:
+            image: Input image as numpy array
+
+        Returns:
+            List of tuples: (text, confidence, coordinates)
+            where coordinates are list of (x, y) points as floats
+
+        Raises:
+            Exception: If PaddleOCR extraction fails
+        """
         try:
             result = self.engine.ocr(image)
 
@@ -147,7 +171,22 @@ class OCREngine:
         self,
         image: np.ndarray
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
-        """Extract text using Tesseract."""
+        """
+        Extract text from image using Tesseract OCR.
+
+        Converts Tesseract's bounding box format (left, top, width, height) to
+        normalized coordinate format with confidence scores scaled to 0.0-1.0 range.
+
+        Args:
+            image: Input image as numpy array
+
+        Returns:
+            List of tuples: (text, confidence, coordinates)
+            where coordinates are list of 4 (x, y) points forming a bounding box
+
+        Raises:
+            Exception: If Tesseract extraction fails
+        """
         try:
             # Get detailed data including confidence
             data = self.engine.image_to_data(image, output_type='dict')
@@ -181,7 +220,19 @@ class OCREngine:
         self,
         image: np.ndarray
     ) -> List[Tuple[str, float, List[Tuple[float, float]]]]:
-        """Extract text using EasyOCR."""
+        """
+        Extract text from image using EasyOCR.
+
+        Args:
+            image: Input image as numpy array
+
+        Returns:
+            List of tuples: (text, confidence, coordinates)
+            where coordinates are list of (x, y) points as floats
+
+        Raises:
+            Exception: If EasyOCR extraction fails
+        """
         try:
             result = self.engine.readtext(image)
 

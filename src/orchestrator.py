@@ -16,7 +16,8 @@ from src.preprocessor import PreprocessingPipeline
 from src.ocr_engines import OCREngine
 from src.annotator import ImageAnnotator
 from src.constraint_validator import CellValidator
-from src.utils import save_csv, load_valid_player_names, setup_logger
+from src.utils import save_csv, load_valid_player_names
+from src.custom_logger import setup_logger
 
 
 class OCRProcessor:
