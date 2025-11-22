@@ -6,13 +6,12 @@ Detects table bounds and creates annotated images.
 import logging
 import cv2
 import numpy as np
-from typing import List, Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict
 from src.config_manager import ConfigManager
 
 
 class ImageAnnotator:
     """Annotates the scoreboard image with grid lines, predicted text, and confidence."""
-
     def __init__(
         self,
         config_manager: ConfigManager,
@@ -171,4 +170,3 @@ class ImageAnnotator:
             self.logger.info(f"Created annotated image with {len(predictions)} predictions")
 
         return annotated
-

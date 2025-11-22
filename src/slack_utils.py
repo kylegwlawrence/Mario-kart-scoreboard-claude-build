@@ -68,11 +68,11 @@ class SlackPoller(SlackBase):
                 self.logger.info("Poll successful. No files in Slack channel")
                 return False
             else:
-                self.logger.exception(f"More than one file was found in slack: {e}")
-                raise
+                error_message = "During polling, found more than one file in the channel. There can only be max one file in the channel. Manually delete the unnecesaary files in the channel."
+                logging.error(error_message)
+                raise ValueError(error_message)
         except SlackApiError as e:
             self.logger.exception(e)
-            raise
         
     def poll(self) -> bool:
         """
@@ -102,11 +102,11 @@ class SlackHandler(SlackBase):
                 self.file_id = None
                 self.logger.info("File retrieval successful. No files in Slack channel")
             elif len(response["files"])>1:
-                self.logger.exception("There is more than one file in the slack channel. There can only be 0 or 1 file in the channel.")
-                raise
+                error_message = "There can only be max one file in the channel"
+                logging.error(error_message)
+                raise ValueError(error_message)
         except SlackApiError as e:
             self.logger.exception(e)
-            raise
         
     def download_file(self, output_dir:str) -> None:
         """
@@ -114,19 +114,16 @@ class SlackHandler(SlackBase):
         """
         self._get_file_info()
         if self.file_id is not None:
-            
             output_path = f"{output_dir}/{self.file_name}"
             try:
                 headers = {'Authorization': f'Bearer {self.bot_token}'}
                 download_response = requests.get(self.url_private, headers=headers, stream=True)
-                download_response.raise_for_status()  # Raises an exception for bad status codes
                 with open(f"{output_path}", 'wb') as f:
                     for chunk in download_response.iter_content(chunk_size=8192):
                         f.write(chunk)
                 self.logger.info(f"File download successful. File saved to: {output_path}")
             except requests.exceptions.RequestException as e:
                 self.logger.exception(e)
-                raise
         else:
             self.logger.info("No files to download")
         
@@ -145,7 +142,6 @@ class SlackHandler(SlackBase):
             self.logger.info(f"File '{image_title}' uploaded successfully to Slack")
         except SlackApiError as e:
             self.logger.exception(e)
-            raise
     
     def _share_file(self):
         """
@@ -161,7 +157,6 @@ class SlackHandler(SlackBase):
             self.logger.info(f"File shared successfully with URL: {self.file_url}")
         except SlackApiError as e:
             self.logger.exception(e)
-            raise
     
     def publish_file(self, file_path, image_title, initial_comment) -> str:
         """
@@ -185,7 +180,6 @@ class SlackHandler(SlackBase):
                 self.logger.info(f"File '{self.file_id}' has been deleted from Slack")
             except SlackApiError as e:
                 self.logger.exception(e)
-                raise
         else:
             self.logger.info("No files to delete")
     
@@ -199,12 +193,13 @@ class SlackHandler(SlackBase):
             self.logger.info("Message sent successfully to Slack channel")
         except SlackApiError as e:
             self.logger.exception(e)
-            raise
     
 if __name__ == "__main__":
     load_dotenv()
     
     handler = SlackHandler(os.getenv("CHANNEL_ID"), os.getenv("BOT_TOKEN"), os.getenv("USER_TOKEN"))
+    
+    handler.download_file("jpgs")
     
     handler.delete_file()
     
